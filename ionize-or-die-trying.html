@@ -1,0 +1,2214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>IONIZE OR DIE TRYING</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-0: #07060a;
+    --bg-1: #110d14;
+    --bg-2: #1a1119;
+    --gold: #d4af37;
+    --gold-bright: #f3d27a;
+    --gold-dim: #8a7128;
+    --red: #b21d1d;
+    --red-bright: #ff3838;
+    --red-deep: #5a0d0d;
+    --parchment: #e9d8a6;
+    --ink: #efe2c0;
+    --green: #4ea64e;
+    --shadow: 0 0 30px rgba(0,0,0,0.7);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: radial-gradient(ellipse at center, var(--bg-2) 0%, var(--bg-0) 80%);
+    color: var(--ink);
+    font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+    font-size: 26px;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(2px 2px at 20% 30%, rgba(212,175,55,0.15), transparent),
+      radial-gradient(1px 1px at 60% 70%, rgba(255,200,100,0.12), transparent),
+      radial-gradient(1.5px 1.5px at 80% 20%, rgba(212,175,55,0.1), transparent),
+      radial-gradient(1px 1px at 40% 80%, rgba(255,200,100,0.08), transparent);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  h1, h2, h3, .title {
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    text-shadow: 0 0 20px rgba(212,175,55,0.4), 0 2px 0 #000;
+    margin: 0;
+  }
+
+  #app {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .screen {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    animation: fadeIn 0.4s ease;
+  }
+  .screen.active { display: flex; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .ornate-frame {
+    border: 2px solid var(--gold-dim);
+    border-radius: 4px;
+    padding: 24px;
+    background: linear-gradient(180deg, rgba(20,15,10,0.9), rgba(10,7,5,0.95));
+    box-shadow: var(--shadow), inset 0 0 30px rgba(0,0,0,0.6);
+    position: relative;
+  }
+
+  .ornate-frame::before, .ornate-frame::after {
+    content: '✦';
+    position: absolute;
+    color: var(--gold);
+    font-size: 14px;
+    opacity: 0.7;
+  }
+  .ornate-frame::before { top: -10px; left: 50%; transform: translateX(-50%); background: var(--bg-0); padding: 0 8px; }
+  .ornate-frame::after { bottom: -10px; left: 50%; transform: translateX(-50%); background: var(--bg-0); padding: 0 8px; }
+
+  .title-banner {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .title-banner h1 {
+    font-size: clamp(41px, 7vw, 57px);
+    line-height: 1.1;
+  }
+  .title-banner .subtitle {
+    color: var(--red-bright);
+    font-style: italic;
+    margin-top: 6px;
+    font-size: 27px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  button, .btn {
+    font-family: 'Cinzel', serif;
+    background: linear-gradient(180deg, #2a1a0d, #1a0e08);
+    color: var(--gold-bright);
+    border: 1px solid var(--gold-dim);
+    border-radius: 3px;
+    padding: 16px 24px;
+    font-size: 28px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(212,175,55,0.15);
+  }
+  button:hover, .btn:hover {
+    background: linear-gradient(180deg, #3a2510, #2a160a);
+    border-color: var(--gold);
+    color: #fff;
+    box-shadow: 0 0 16px rgba(212,175,55,0.35), inset 0 1px 0 rgba(212,175,55,0.25);
+  }
+  button:active, .btn:active { transform: translateY(1px); }
+  button:disabled, .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  button.danger {
+    background: linear-gradient(180deg, #3a0d0d, #1f0606);
+    border-color: var(--red);
+    color: #ffcccc;
+  }
+  button.danger:hover {
+    background: linear-gradient(180deg, #5a1414, #2a0808);
+    box-shadow: 0 0 16px rgba(255,56,56,0.4);
+  }
+
+  button.success {
+    background: linear-gradient(180deg, #1a3a1a, #0a1f0a);
+    border-color: var(--green);
+    color: #cfffcf;
+  }
+  button.success:hover {
+    box-shadow: 0 0 16px rgba(78,166,78,0.4);
+  }
+
+  input[type="text"], select {
+    font-family: 'Cormorant Garamond', serif;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--gold-dim);
+    color: var(--ink);
+    padding: 12px 14px;
+    font-size: 29px;
+    width: 100%;
+    border-radius: 2px;
+  }
+  input[type="text"]:focus, select:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 8px rgba(212,175,55,0.3); }
+
+  label { font-size: 26px; color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  /* Setup screen */
+  .player-rows { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+  .player-row { display: flex; flex-direction: column; gap: 6px; }
+  .role-counter {
+    text-align: center;
+    margin: 10px 0;
+    color: var(--gold);
+    font-style: italic;
+  }
+  .role-counter.bad { color: var(--red-bright); }
+
+  /* RPS phase */
+  .rps-list { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+  .rps-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border: 1px solid var(--gold-dim);
+    border-radius: 3px;
+    background: rgba(0,0,0,0.3);
+  }
+  .rps-row .name { font-size: 31px; color: var(--ink); }
+  .rps-buttons { display: flex; gap: 6px; }
+  .rps-buttons button { padding: 10px 16px; font-size: 22px; }
+  .rps-buttons button.selected.win { background: linear-gradient(180deg, #1a3a1a, #0a1f0a); border-color: var(--green); color: #cfffcf; }
+  .rps-buttons button.selected.lose { background: linear-gradient(180deg, #3a0d0d, #1f0606); border-color: var(--red); color: #ffcccc; }
+
+  /* HUD */
+  .hud {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .hud-tile {
+    background: linear-gradient(180deg, rgba(40,25,10,0.7), rgba(20,12,5,0.9));
+    border: 1px solid var(--gold-dim);
+    padding: 10px 14px;
+    border-radius: 3px;
+    text-align: center;
+  }
+  .hud-tile .label {
+    font-family: 'Cinzel', serif;
+    font-size: 23px;
+    color: var(--gold-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .hud-tile .value {
+    font-family: 'Cinzel', serif;
+    font-size: 39px;
+    color: var(--gold-bright);
+    margin-top: 2px;
+    text-shadow: 0 0 12px rgba(212,175,55,0.3);
+  }
+  .hud-tile.danger .value { color: var(--red-bright); text-shadow: 0 0 12px rgba(255,56,56,0.4); }
+
+  .game-timer {
+    text-align: center;
+    margin: 6px 0 16px;
+    padding: 10px;
+    background: linear-gradient(180deg, rgba(50,10,10,0.6), rgba(20,5,5,0.9));
+    border: 1px solid var(--red-deep);
+    border-radius: 3px;
+  }
+  .game-timer .label {
+    font-family: 'Cinzel', serif;
+    font-size: 24px;
+    color: var(--red-bright);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .game-timer .value {
+    font-family: 'Cinzel', serif;
+    font-size: 55px;
+    color: var(--red-bright);
+    text-shadow: 0 0 24px rgba(255,56,56,0.5);
+    line-height: 1.1;
+  }
+  .game-timer.crit { animation: pulse-red 0.8s infinite; }
+  @keyframes pulse-red {
+    0%, 100% { background: linear-gradient(180deg, rgba(80,15,15,0.7), rgba(30,5,5,0.9)); }
+    50% { background: linear-gradient(180deg, rgba(140,20,20,0.9), rgba(60,10,10,1)); }
+  }
+
+  /* Atom visualization */
+  .atom-viz-wrap {
+    background: radial-gradient(circle at center, rgba(40,20,10,0.6), rgba(5,5,10,0.95) 70%);
+    border: 1px solid var(--gold-dim);
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 14px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .atom-viz {
+    width: 100%;
+    max-width: 460px;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    display: block;
+    margin: 0 auto;
+  }
+  .atom-viz .orbit-ring {
+    fill: none;
+    stroke: var(--gold-dim);
+    stroke-width: 1;
+    stroke-dasharray: 4 6;
+    opacity: 0.5;
+  }
+  .atom-viz .orbit-ring.inner-shell { stroke: var(--gold); opacity: 0.7; stroke-dasharray: 6 4; }
+  .atom-viz .orbit-ring.danger-ring { stroke: var(--red); opacity: 0.6; stroke-dasharray: 2 4; }
+  .atom-viz .nucleus-core {
+    fill: url(#nucleus-grad);
+    stroke: var(--red);
+    stroke-width: 2;
+    filter: drop-shadow(0 0 16px rgba(255,56,56,0.6));
+  }
+  .atom-viz .nucleus-glow {
+    fill: var(--red);
+    opacity: 0.15;
+    animation: nuc-pulse 2s ease-in-out infinite;
+  }
+  @keyframes nuc-pulse {
+    0%, 100% { opacity: 0.1; r: 50; }
+    50% { opacity: 0.25; r: 62; }
+  }
+  .atom-viz .nucleus-label {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    fill: #fff;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+    font-weight: 700;
+  }
+  .atom-viz .electron-dot {
+    transition: cx 0.6s cubic-bezier(.4,1.4,.5,1), cy 0.6s cubic-bezier(.4,1.4,.5,1), opacity 0.5s, r 0.4s;
+  }
+  .atom-viz .electron-dot.inner {
+    fill: url(#inner-grad);
+    stroke: var(--gold);
+    stroke-width: 1.5;
+    filter: drop-shadow(0 0 6px rgba(212,175,55,0.7));
+  }
+  .atom-viz .electron-dot.valence {
+    fill: url(#valence-grad);
+    stroke: #80c8ff;
+    stroke-width: 1.5;
+    filter: drop-shadow(0 0 8px rgba(128,200,255,0.7));
+  }
+  .atom-viz .electron-dot.escaped {
+    fill: #80ff80;
+    stroke: #80ff80;
+    filter: drop-shadow(0 0 16px rgba(128,255,128,0.9));
+  }
+  .atom-viz .electron-dot.absorbed {
+    opacity: 0;
+  }
+  .atom-viz .electron-label {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    fill: var(--ink);
+    text-anchor: middle;
+    pointer-events: none;
+    transition: x 0.6s cubic-bezier(.4,1.4,.5,1), y 0.6s cubic-bezier(.4,1.4,.5,1), opacity 0.5s;
+  }
+  .atom-viz .current-turn-halo {
+    fill: none;
+    stroke: var(--gold-bright);
+    stroke-width: 2;
+    opacity: 0.9;
+    animation: halo-spin 3s linear infinite;
+    transform-origin: center;
+  }
+  @keyframes halo-spin {
+    0% { stroke-dashoffset: 0; }
+    100% { stroke-dashoffset: 60; }
+  }
+  .atom-viz .pull-line {
+    stroke: rgba(255,56,56,0.4);
+    stroke-width: 1;
+    stroke-dasharray: 3 4;
+    fill: none;
+  }
+
+  /* Electron status panel */
+  .electron-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .electron-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border: 1px solid var(--gold-dim);
+    border-radius: 3px;
+    background: rgba(0,0,0,0.3);
+  }
+  .electron-row .name { font-size: 30px; }
+  .electron-row .name .role-tag {
+    font-family: 'Cinzel', serif;
+    font-size: 22px;
+    background: var(--gold-dim);
+    color: var(--bg-0);
+    padding: 1px 6px;
+    border-radius: 2px;
+    margin-left: 6px;
+    letter-spacing: 0.1em;
+  }
+  .electron-row .name .role-tag.nuc { background: var(--red); color: #fff; }
+  .electron-row .name .role-tag.inner { background: #7a4a2a; color: #fff; }
+  .electron-row.escaped { opacity: 0.5; text-decoration: line-through; }
+  .electron-row.absorbed { opacity: 0.4; color: var(--red-bright); }
+  .electron-row .meta { font-size: 25px; color: var(--gold-dim); display: flex; gap: 10px; align-items: center; }
+  .steps-pip { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--bg-1); border: 1px solid var(--gold-dim); margin: 0 1px; }
+  .steps-pip.filled { background: var(--red-bright); border-color: var(--red); box-shadow: 0 0 4px rgba(255,56,56,0.6); }
+  .shield-used { color: var(--red-bright); font-weight: bold; }
+  .shield-ok { color: var(--green); }
+
+  /* Dice */
+  .dice-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    margin: 20px 0;
+  }
+  .dice-face {
+    width: 160px;
+    height: 160px;
+    background: linear-gradient(160deg, #f6e9c4, #d4af37 70%, #8a7128);
+    border: 4px solid #4a3414;
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6), inset 0 -6px 14px rgba(0,0,0,0.35), inset 0 4px 8px rgba(255,255,255,0.25);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    padding: 18px;
+    gap: 4px;
+    transition: transform 0.1s;
+  }
+  .dice-face.rolling {
+    animation: dice-shake 0.12s infinite;
+  }
+  @keyframes dice-shake {
+    0% { transform: rotate(-8deg) translateY(0); }
+    25% { transform: rotate(6deg) translateY(-4px); }
+    50% { transform: rotate(-4deg) translateY(2px); }
+    75% { transform: rotate(8deg) translateY(-2px); }
+    100% { transform: rotate(-6deg) translateY(0); }
+  }
+  .dice-face.settle {
+    animation: dice-settle 0.4s ease-out;
+  }
+  @keyframes dice-settle {
+    0% { transform: scale(1.3) rotate(0deg); }
+    60% { transform: scale(0.92) rotate(0deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+  .dice-face .pip {
+    background: radial-gradient(circle at 35% 30%, #2a1a05, #000);
+    border-radius: 50%;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+    align-self: center;
+    justify-self: center;
+    width: 26px;
+    height: 26px;
+  }
+  .dice-face .pip.hidden { visibility: hidden; }
+
+  .roll-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 32px;
+    padding: 18px 44px;
+    background: linear-gradient(180deg, #4a2a10, #2a1408);
+    color: var(--gold-bright);
+    border: 2px solid var(--gold);
+    border-radius: 6px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6), inset 0 1px 0 rgba(212,175,55,0.25);
+    transition: all 0.2s;
+  }
+  .roll-btn:hover {
+    background: linear-gradient(180deg, #5a3414, #3a1c0a);
+    box-shadow: 0 0 24px rgba(212,175,55,0.5), inset 0 1px 0 rgba(212,175,55,0.35);
+    transform: translateY(-2px);
+  }
+  .roll-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Roll result */
+  .roll-result {
+    text-align: center;
+    padding: 14px;
+    margin: 14px 0;
+    border-radius: 4px;
+    border: 1px solid var(--gold-dim);
+    background: rgba(0,0,0,0.4);
+  }
+  .roll-result .label { font-family: 'Cinzel', serif; font-size: 23px; letter-spacing: 0.2em; color: var(--gold-dim); }
+  .roll-result .effect {
+    font-family: 'Cinzel', serif;
+    font-size: 35px;
+    margin-top: 4px;
+    color: var(--gold-bright);
+  }
+  .roll-result.crit .effect { color: var(--red-bright); }
+  .roll-result.adv .effect { color: #80ff80; }
+  .roll-result .desc { font-style: italic; color: var(--ink); margin-top: 6px; font-size: 28px; }
+
+  /* Question display */
+  .question-box {
+    border: 1px solid var(--gold);
+    background: linear-gradient(180deg, rgba(30,20,10,0.9), rgba(10,7,5,0.95));
+    padding: 22px;
+    border-radius: 4px;
+    margin: 14px 0;
+    text-align: center;
+  }
+  .question-category {
+    font-family: 'Cinzel', serif;
+    color: var(--gold);
+    font-size: 24px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .question-text {
+    font-size: 35px;
+    line-height: 1.4;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+  .question-answer {
+    font-style: italic;
+    color: var(--gold-bright);
+    font-size: 29px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--gold-dim);
+    display: none;
+  }
+  .question-answer.shown { display: block; }
+
+  .answer-timer {
+    text-align: center;
+    margin: 14px 0;
+  }
+  .answer-timer .value {
+    font-family: 'Cinzel', serif;
+    font-size: 76px;
+    color: var(--gold-bright);
+    text-shadow: 0 0 16px rgba(212,175,55,0.4);
+  }
+  .answer-timer.warn .value { color: #ff9c3a; }
+  .answer-timer.crit .value { color: var(--red-bright); animation: pulse-text 0.5s infinite; }
+  @keyframes pulse-text {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* Action row */
+  .action-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .action-row > button { flex: 1; min-width: 140px; }
+  .action-row > button.full { flex-basis: 100%; }
+
+  /* Question count tracker */
+  .gauntlet-tracker {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 14px 0;
+  }
+  .gauntlet-pip {
+    width: 52px;
+    height: 52px;
+    font-size: 26px;
+    border: 2px solid var(--gold-dim);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cinzel', serif;
+    color: var(--gold-dim);
+  }
+  .gauntlet-pip.current { border-color: var(--gold); color: var(--gold-bright); box-shadow: 0 0 12px rgba(212,175,55,0.5); }
+  .gauntlet-pip.done { background: var(--green); border-color: var(--green); color: #fff; }
+  .gauntlet-pip.failed { background: var(--red); border-color: var(--red); color: #fff; }
+
+  /* End screen */
+  .end-screen {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .end-screen .verdict {
+    font-family: 'Cinzel', serif;
+    font-size: 61px;
+    margin-bottom: 16px;
+  }
+  .end-screen .verdict.victory { color: var(--green); text-shadow: 0 0 32px rgba(78,166,78,0.6); }
+  .end-screen .verdict.defeat { color: var(--red-bright); text-shadow: 0 0 32px rgba(255,56,56,0.6); }
+  .end-screen .flavor {
+    font-style: italic;
+    font-size: 33px;
+    color: var(--ink);
+    margin: 20px 0;
+    line-height: 1.5;
+  }
+
+  /* Modal overlay */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    max-width: 500px;
+    width: 100%;
+    background: linear-gradient(180deg, var(--bg-2), var(--bg-1));
+    border: 2px solid var(--gold);
+    padding: 24px;
+    border-radius: 4px;
+    box-shadow: 0 0 60px rgba(212,175,55,0.3);
+  }
+  .modal h2 { color: var(--gold); margin-bottom: 14px; text-align: center; font-size: 35px; }
+  .modal p { font-size: 29px; line-height: 1.5; }
+
+  /* Flash effects */
+  .flash {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 200;
+    opacity: 0;
+  }
+  .flash.green { background: radial-gradient(circle, rgba(78,166,78,0.5), transparent 70%); animation: flash 0.6s ease-out; }
+  .flash.red { background: radial-gradient(circle, rgba(255,56,56,0.5), transparent 70%); animation: flash 0.6s ease-out; }
+  .flash.gold { background: radial-gradient(circle, rgba(212,175,55,0.5), transparent 70%); animation: flash 0.8s ease-out; }
+  @keyframes flash {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* Section heading */
+  .section-heading {
+    font-family: 'Cinzel', serif;
+    text-align: center;
+    color: var(--gold);
+    font-size: 27px;
+    letter-spacing: 0.2em;
+    margin: 18px 0 10px;
+    text-transform: uppercase;
+    position: relative;
+  }
+  .section-heading::before, .section-heading::after {
+    content: '';
+    display: inline-block;
+    width: 40px;
+    height: 1px;
+    background: var(--gold-dim);
+    vertical-align: middle;
+    margin: 0 10px;
+  }
+
+  .info-bar {
+    text-align: center;
+    font-style: italic;
+    color: var(--gold-bright);
+    margin: 10px 0;
+    font-size: 29px;
+  }
+
+  .small-note {
+    font-size: 26px;
+    color: var(--gold-dim);
+    font-style: italic;
+    text-align: center;
+    margin: 8px 0;
+  }
+
+  /* ===== Roster setup screen ===== */
+  .roster { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 18px 0; align-items: start; }
+  .roster-bar { display: flex; flex-direction: column; gap: 8px; }
+  .roster-bar-label, .roster-panel-label {
+    font-family: 'Cinzel', serif; font-size: 22px; color: var(--gold-dim);
+    letter-spacing: 0.15em; text-transform: uppercase; text-align: center; margin-bottom: 2px;
+  }
+  .person-chip {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 14px; border: 1px solid var(--gold-dim); border-radius: 3px;
+    background: rgba(0,0,0,0.35); cursor: pointer; transition: all 0.18s ease;
+  }
+  .person-chip:hover { border-color: var(--gold); background: rgba(40,28,10,0.5); }
+  .person-chip.active {
+    border-color: var(--gold-bright);
+    background: linear-gradient(180deg, rgba(60,42,16,0.7), rgba(30,20,8,0.9));
+    box-shadow: 0 0 14px rgba(212,175,55,0.35), inset 0 1px 0 rgba(212,175,55,0.25);
+  }
+  .person-chip .pname { font-size: 30px; color: var(--ink); }
+  .person-chip .ptag {
+    font-family: 'Cinzel', serif; font-size: 18px; letter-spacing: 0.08em;
+    padding: 2px 8px; border-radius: 2px; background: var(--bg-1); color: var(--gold-dim); border: 1px solid var(--gold-dim);
+  }
+  .person-chip .ptag.nucleus { background: var(--red); color: #fff; border-color: var(--red); }
+  .person-chip .ptag.inner { background: #7a4a2a; color: #fff; border-color: #7a4a2a; }
+  .person-chip .ptag.valence { background: #2a5a7a; color: #fff; border-color: #2a5a7a; }
+  .person-chip .ptag.unset { font-style: italic; }
+  .roster-panel {
+    border: 1px solid var(--gold-dim); border-radius: 4px; padding: 16px;
+    background: linear-gradient(180deg, rgba(25,18,10,0.7), rgba(12,8,5,0.9)); text-align: center;
+  }
+  .roster-panel .sel-name {
+    font-family: 'Cinzel', serif; font-size: 36px; color: var(--gold-bright);
+    text-shadow: 0 0 16px rgba(212,175,55,0.35); margin-bottom: 14px; line-height: 1.1;
+  }
+  .role-option { width: 100%; margin-bottom: 8px; font-size: 24px; padding: 13px 14px; text-align: center; }
+  .role-option .role-sub {
+    display: block; font-size: 16px; color: var(--gold-dim); text-transform: none;
+    letter-spacing: 0.04em; font-family: 'Cormorant Garamond', serif; font-style: italic;
+  }
+  .role-option.selected {
+    border-color: var(--gold-bright); color: #fff;
+    box-shadow: 0 0 16px rgba(212,175,55,0.4), inset 0 1px 0 rgba(212,175,55,0.25);
+    background: linear-gradient(180deg, #4a3214, #2a1a0a);
+  }
+  .role-option.selected.nucleus { border-color: var(--red); box-shadow: 0 0 16px rgba(255,56,56,0.4); }
+
+  /* ===== Two-column turn layout ===== */
+  .turn-layout { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 18px; align-items: start; }
+  .turn-side { position: sticky; top: 14px; }
+  .turn-main { min-width: 0; }
+  .atom-caption {
+    font-family: 'Cinzel', serif; text-align: center; color: var(--gold); font-size: 22px;
+    letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 6px;
+  }
+  .atom-caption .sub {
+    display: block; font-size: 16px; color: var(--gold-dim); letter-spacing: 0.1em;
+    font-style: italic; text-transform: none;
+  }
+
+  /* ===== Floating outcome popups near electrons ===== */
+  .float-pop {
+    position: absolute; transform: translate(-50%, -50%); z-index: 25;
+    font-family: 'Cinzel', serif; font-size: 21px; font-weight: 700; letter-spacing: 0.04em;
+    padding: 5px 12px; border-radius: 4px; white-space: nowrap; pointer-events: none;
+    animation: float-pop 1.8s ease-out forwards;
+  }
+  .float-pop.good { color: #d6ffd6; background: rgba(16,52,16,0.92); border: 1px solid var(--green); text-shadow: 0 0 8px rgba(78,166,78,0.6); }
+  .float-pop.bad { color: #ffd6d6; background: rgba(60,10,10,0.92); border: 1px solid var(--red); text-shadow: 0 0 8px rgba(255,56,56,0.6); }
+  @keyframes float-pop {
+    0% { opacity: 0; transform: translate(-50%, -25%) scale(0.7); }
+    18% { opacity: 1; transform: translate(-50%, -65%) scale(1.06); }
+    78% { opacity: 1; transform: translate(-50%, -120%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -165%) scale(1); }
+  }
+
+  /* ===== Screening decision modal ===== */
+  .screen-modal-name {
+    font-family: 'Cinzel', serif; font-size: clamp(38px, 9vw, 52px); font-weight: 900;
+    color: var(--red-bright); text-align: center; text-shadow: 0 0 22px rgba(255,56,56,0.55), 0 2px 0 #000;
+    margin-bottom: 6px; line-height: 1.05; letter-spacing: 0.04em;
+  }
+  .screen-modal-role {
+    font-family: 'Cinzel', serif; text-align: center; color: var(--gold-dim);
+    font-size: 18px; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 14px;
+  }
+  .screen-modal-text { text-align: center; font-size: 27px; line-height: 1.45; color: var(--ink); margin-bottom: 6px; }
+
+  /* ===== Deferred screening control during question ===== */
+  .deferred-shield-area { display: flex; flex-direction: column; gap: 8px; margin: 10px 0 4px; }
+  .deferred-shield-area button { font-size: 21px; padding: 11px 14px; }
+
+  @media (max-width: 820px) {
+    .turn-layout { grid-template-columns: 1fr; }
+    .turn-side { position: static; order: -1; margin-bottom: 4px; }
+  }
+
+  @media (max-width: 600px) {
+    #app { padding: 10px; }
+    .ornate-frame { padding: 16px; }
+    .player-rows { grid-template-columns: 1fr; }
+    .roster { grid-template-columns: 1fr; }
+    .dice-grid { gap: 6px; }
+    .die-btn { font-size: 22px; }
+    .hud { grid-template-columns: repeat(2, 1fr); }
+    .question-text { font-size: 18px; }
+    .end-screen .verdict { font-size: 36px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- SETUP SCREEN -->
+  <div id="screen-setup" class="screen active">
+    <div class="title-banner">
+      <h1>IONIZE OR DIE TRYING</h1>
+      <div class="subtitle">A Gauntlet of Electrons & Nuclear Pull</div>
+    </div>
+    <div class="ornate-frame">
+      <div class="section-heading">Assemble The Atom</div>
+      <p class="small-note">Select a player on the left, then assign their role on the right. The atom needs exactly 1 Nucleus, 2 Inner Shell Electrons, and 3 Valence Electrons.</p>
+      <div class="roster">
+        <div class="roster-col">
+          <div class="roster-bar-label">Players</div>
+          <div class="roster-bar" id="roster-bar"></div>
+        </div>
+        <div class="roster-col">
+          <div class="roster-panel-label">Assign Role</div>
+          <div class="roster-panel" id="roster-panel"></div>
+        </div>
+      </div>
+      <div class="role-counter" id="role-counter"></div>
+      <button id="start-rps" class="full" style="width:100%;">Proceed to Rock-Paper-Scissors</button>
+    </div>
+  </div>
+
+  <!-- RPS SCREEN -->
+  <div id="screen-rps" class="screen">
+    <div class="title-banner">
+      <h1>The Opening Ritual</h1>
+      <div class="subtitle">Rock · Paper · Scissors vs. the Nucleus</div>
+    </div>
+    <div class="ornate-frame">
+      <div class="section-heading">Determine Turn Order</div>
+      <p class="small-note">Each electron faces the Nucleus in a single round of rock-paper-scissors. Winners act first; losers act last.</p>
+      <div class="rps-list" id="rps-list"></div>
+      <button id="rps-confirm" style="width:100%;" disabled>Lock In Turn Order</button>
+    </div>
+  </div>
+
+  <!-- POSITIONING SCREEN -->
+  <div id="screen-positioning" class="screen">
+    <div class="title-banner">
+      <h1>Form The Shells</h1>
+      <div class="subtitle">Round <span id="round-num">1</span></div>
+    </div>
+    <div class="ornate-frame">
+      <div class="section-heading">Physical Positioning</div>
+      <p style="font-size:17px; line-height:1.5; text-align:center;">
+        Each <strong style="color:var(--gold);">Valence Electron</strong> must stand directly in front of one <strong style="color:var(--gold);">Inner Shell Electron</strong>.
+      </p>
+      <p style="font-size:15px; text-align:center; color:var(--ink); margin-top:10px;">
+        One inner shell will have <strong>2 valence electrons</strong> in front of them.<br>
+        The other will have <strong>1 valence electron</strong> in front.
+      </p>
+      <p class="small-note">Both inner shell players must confirm the formation is set before the round begins. Shielding is only legal if positioning is honored.</p>
+      <button id="positioning-confirm" class="success" style="width:100%; margin-top:12px;">Formation Locked — Begin Round</button>
+    </div>
+  </div>
+
+  <!-- TURN SCREEN -->
+  <div id="screen-turn" class="screen">
+   <div class="turn-layout">
+    <div class="turn-main">
+    <div class="game-timer" id="game-timer">
+      <div class="label">Game Timer</div>
+      <div class="value" id="game-timer-value">5:00</div>
+    </div>
+
+    <div class="hud">
+      <div class="hud-tile">
+        <div class="label">Round</div>
+        <div class="value" id="hud-round">1</div>
+      </div>
+      <div class="hud-tile">
+        <div class="label">Escaped</div>
+        <div class="value" id="hud-escaped">0 / 3</div>
+      </div>
+    </div>
+
+    <div class="electron-panel" id="electron-panel"></div>
+
+    <div class="ornate-frame" id="turn-frame">
+      <div class="section-heading" id="turn-phase-heading">Phase: Dice Roll</div>
+      <div class="info-bar" id="turn-info">It is <strong id="current-player-name"></strong>'s turn.</div>
+
+      <!-- PHASE: DICE ROLL -->
+      <div id="phase-dice">
+        <p class="small-note">The valence electron rolls the sacred D6.</p>
+        <div class="dice-stage">
+          <div class="dice-face" id="dice-valence"></div>
+          <button class="roll-btn" id="roll-valence-btn" onclick="animateRoll('valence')">🎲 Roll Dice</button>
+        </div>
+      </div>
+
+      <!-- PHASE: NUCLEUS COUNTER -->
+      <div id="phase-counter" style="display:none;">
+        <div class="roll-result adv">
+          <div class="label">Roll Result</div>
+          <div class="effect">⚡ ADVANTAGE — Nat 6 ⚡</div>
+          <div class="desc">The Nucleus may counter-roll to challenge the surge.</div>
+        </div>
+        <p class="small-note">The Nucleus rolls a D6 to challenge the surge.</p>
+        <div class="dice-stage">
+          <div class="dice-face" id="dice-nucleus"></div>
+          <button class="roll-btn" id="roll-nucleus-btn" onclick="animateRoll('nucleus')">🎲 Roll Dice</button>
+        </div>
+      </div>
+
+      <!-- PHASE: CATEGORY PICK -->
+      <div id="phase-category" style="display:none;">
+        <div class="roll-result crit">
+          <div class="label">Roll Result</div>
+          <div class="effect">— ROLLED A 2 —</div>
+          <div class="desc">7 seconds. The Nucleus chooses the category of suffering.</div>
+        </div>
+        <p class="small-note">Nucleus, select the question category:</p>
+        <div class="action-row">
+          <button class="full" onclick="pickCategory('definition')">Definition &amp; Trends</button>
+          <button class="full" onclick="pickCategory('successive')">Successive Ionization</button>
+          <button class="full" onclick="pickCategory('period')">Across Period vs Down Group</button>
+        </div>
+      </div>
+
+      <!-- PHASE: SHIELDING OFFER (decisions handled via per-electron pop-ups) -->
+      <div id="phase-shield-offer" style="display:none;">
+        <div class="roll-result" id="shield-roll-summary"></div>
+        <p class="info-bar" id="shield-offer-info">Awaiting the inner shell electrons' screening decision…</p>
+        <p class="small-note">Each inner shell electron with an unused shield is asked, one by one, whether to screen now.</p>
+        <div id="shield-buttons" class="action-row"></div>
+      </div>
+
+      <!-- PHASE: SHIELDING ROLL (a deferred inner shell gambles on the dice) -->
+      <div id="phase-shield-roll" style="display:none;">
+        <div class="info-bar"><strong id="shielder-name"></strong> invokes the screening effect and steps between the Nucleus and the escaping electron.</div>
+        <p class="small-note">Deciding late is a gamble — roll a D6. (4–6 = screening holds, 1–3 = it fails.)</p>
+        <div class="dice-stage">
+          <div class="dice-face" id="dice-shield"></div>
+          <button class="roll-btn" id="roll-shield-btn" onclick="animateRoll('shield')">🎲 Roll Dice</button>
+        </div>
+      </div>
+
+      <!-- PHASE: QUESTION -->
+      <div id="phase-question" style="display:none;">
+        <div class="gauntlet-tracker" id="gauntlet-tracker"></div>
+        <div class="question-box">
+          <div class="question-category" id="q-category"></div>
+          <div class="question-text" id="q-text"></div>
+          <div class="question-answer" id="q-answer"></div>
+        </div>
+        <div class="answer-timer" id="answer-timer">
+          <div class="value" id="answer-timer-value">10</div>
+        </div>
+        <div class="deferred-shield-area" id="deferred-shield-area"></div>
+        <div class="action-row">
+          <button class="success" onclick="markAnswer(true)">✓ Correct</button>
+          <button class="danger" onclick="markAnswer(false)">✗ Incorrect</button>
+        </div>
+        <div class="action-row" style="margin-top:8px;">
+          <button onclick="revealAnswer()">Reveal Answer</button>
+          <button onclick="pauseAnswerTimer()" id="pause-btn">Pause Timer</button>
+        </div>
+      </div>
+
+      <!-- PHASE: DEATH SAVE ROLL -->
+      <div id="phase-death-save" style="display:none;">
+        <div class="roll-result crit">
+          <div class="label">— DEATH SAVE —</div>
+          <div class="effect">The Nucleus looms at arm's length</div>
+          <div class="desc"><strong id="death-save-name"></strong> rolls for mercy.</div>
+        </div>
+        <p class="small-note">Roll 5 or 6 = gauntlet reduced to 1 question.<br>Roll 1–4 = full 3-question gauntlet.</p>
+        <div class="dice-stage">
+          <div class="dice-face" id="dice-death"></div>
+          <button class="roll-btn" id="roll-death-btn" onclick="animateRoll('death')">🎲 Roll Dice</button>
+        </div>
+      </div>
+
+      <!-- PHASE: TURN END / NEXT -->
+      <div id="phase-turn-end" style="display:none;">
+        <div id="turn-end-summary" class="roll-result"></div>
+        <button onclick="advanceTurn()" style="width:100%;">Next Turn ▶</button>
+      </div>
+
+    </div>
+
+    <button onclick="confirmAbort()" style="margin-top:14px; opacity:0.7; font-size:12px; padding:8px;">Abort Game</button>
+    </div><!-- /turn-main -->
+
+    <div class="turn-side">
+      <div class="atom-caption">Boron &middot; &#8309;B<span class="sub">2 inner &middot; 3 valence electrons</span></div>
+      <div class="atom-viz-wrap">
+        <svg class="atom-viz" id="atom-viz" viewBox="0 0 460 460">
+          <defs>
+            <radialGradient id="nucleus-grad" cx="40%" cy="35%" r="65%">
+              <stop offset="0%" stop-color="#ff7070"/>
+              <stop offset="50%" stop-color="#b21d1d"/>
+              <stop offset="100%" stop-color="#3a0808"/>
+            </radialGradient>
+            <radialGradient id="inner-grad" cx="35%" cy="30%" r="70%">
+              <stop offset="0%" stop-color="#f8e6a8"/>
+              <stop offset="60%" stop-color="#d4af37"/>
+              <stop offset="100%" stop-color="#6a4f10"/>
+            </radialGradient>
+            <radialGradient id="valence-grad" cx="35%" cy="30%" r="70%">
+              <stop offset="0%" stop-color="#d8eeff"/>
+              <stop offset="55%" stop-color="#5aaef0"/>
+              <stop offset="100%" stop-color="#10406a"/>
+            </radialGradient>
+          </defs>
+          <!-- orbital rings: inner shell (2 e-) + valence shell (3 e-), inner rings mark pull steps -->
+          <circle class="orbit-ring danger-ring" cx="230" cy="230" r="80"/>
+          <circle class="orbit-ring inner-shell" cx="230" cy="230" r="110"/>
+          <circle class="orbit-ring" cx="230" cy="230" r="150"/>
+          <circle class="orbit-ring" cx="230" cy="230" r="185"/>
+          <circle class="orbit-ring" cx="230" cy="230" r="215"/>
+          <!-- nucleus glow + core -->
+          <circle class="nucleus-glow" cx="230" cy="230" r="55"/>
+          <circle class="nucleus-core" cx="230" cy="230" r="42"/>
+          <text class="nucleus-label" id="viz-nucleus-label" x="230" y="224"></text>
+          <text id="viz-nucleus-sub" x="230" y="247" text-anchor="middle" style="font-family:'Cinzel',serif; font-size:13px; fill:#ffdada; opacity:0.85;">5 p&#8314;</text>
+          <!-- electrons & lines injected by JS -->
+          <g id="viz-electrons"></g>
+          <g id="viz-labels"></g>
+          <g id="viz-halo"></g>
+        </svg>
+      </div>
+    </div><!-- /turn-side -->
+   </div><!-- /turn-layout -->
+  </div>
+
+  <!-- END SCREEN -->
+  <div id="screen-end" class="screen">
+    <div class="ornate-frame end-screen">
+      <div class="verdict" id="end-verdict"></div>
+      <div class="flavor" id="end-flavor"></div>
+      <div id="end-stats" style="margin: 20px 0; color: var(--gold-dim);"></div>
+      <button onclick="resetGame()" style="margin-top:20px;">New Game</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2 id="modal-title"></h2>
+    <p id="modal-body"></p>
+    <div class="action-row" style="margin-top:18px;">
+      <button onclick="closeModal()">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Screening decision pop-up (one inner shell electron at a time) -->
+<div class="modal-overlay" id="screen-modal">
+  <div class="modal">
+    <div class="screen-modal-name" id="screen-modal-name"></div>
+    <div class="screen-modal-role">Inner Shell Electron</div>
+    <p class="screen-modal-text">Give the screening effect now? Wait, and screening later means rolling the dice — with no guarantee it holds.</p>
+    <div class="action-row" style="margin-top:18px;">
+      <button class="success" id="screen-now-btn">Screen Now</button>
+      <button id="screen-later-btn">Decide Later</button>
+    </div>
+  </div>
+</div>
+
+<!-- Flash effects -->
+<div class="flash" id="flash"></div>
+
+<script>
+/* ======================== QUESTION BANK ======================== */
+const QUESTIONS = {
+  definition: [
+    { q: "Define first ionization energy.", a: "The energy required to remove the most loosely held electron from one mole of gaseous atoms to form one mole of gaseous +1 ions." },
+    { q: "State the units of ionization energy.", a: "kJ mol⁻¹ (kilojoules per mole)." },
+    { q: "Why is ionization energy always endothermic?", a: "Energy must be supplied to overcome the attraction between the nucleus and the electron being removed." },
+    { q: "Name three factors that affect ionization energy.", a: "Nuclear charge, atomic radius (distance from nucleus), and shielding by inner electrons." },
+    { q: "What is the general trend in first ionization energy across a period?", a: "It generally increases across a period from left to right." },
+    { q: "What is the general trend in first ionization energy down a group?", a: "It decreases down a group." },
+    { q: "Why does ionization energy increase across a period?", a: "Nuclear charge increases while shielding stays roughly the same and atomic radius decreases, so outer electrons are more strongly attracted." },
+    { q: "Why does ionization energy decrease down a group?", a: "Atomic radius and shielding increase, weakening the attraction between the nucleus and outer electrons, despite increased nuclear charge." },
+    { q: "Which has higher first ionization energy: Na or Mg? Why?", a: "Mg, because it has higher nuclear charge with similar shielding, holding outer electrons more tightly." },
+    { q: "What does a low ionization energy suggest about an element's reactivity?", a: "The element loses electrons easily, so it is highly reactive as a metal (good reducing agent)." },
+    { q: "Which element in Period 2 has the highest first ionization energy?", a: "Neon (Ne)." },
+    { q: "Which group has the lowest first ionization energies overall?", a: "Group 1 (alkali metals)." },
+    { q: "Why is ionization always defined for the gaseous state?", a: "So no energy is gained or lost from breaking intermolecular forces or lattice structures — only electron removal is measured." },
+    { q: "What is the 'shielding effect'?", a: "Inner electrons partially block the attraction of the nucleus on the outer electrons, reducing effective nuclear charge." },
+    { q: "Does effective nuclear charge increase or decrease across a period?", a: "It increases." },
+    { q: "Is energy released or absorbed during ionization?", a: "Absorbed — ionization is endothermic." },
+    { q: "Name the noble gas with the highest first ionization energy.", a: "Helium (He)." },
+    { q: "Why does helium have the highest first ionization energy of any element?", a: "It has the smallest atomic radius and no shielding from inner electrons, so its 1s electrons feel the full nuclear attraction." },
+    { q: "Compare the first ionization energies of Li and Cs.", a: "Li has a much higher first ionization energy because its outer electron is closer to the nucleus with less shielding than Cs." },
+    { q: "Why is the first ionization energy of K lower than Na?", a: "K's outer electron is in a higher energy level, further from the nucleus, with more shielding." },
+    { q: "What is meant by 'effective nuclear charge'?", a: "The net positive charge experienced by an outer electron after accounting for shielding by inner electrons." },
+    { q: "How does atomic radius affect ionization energy?", a: "Larger atomic radius means weaker attraction on outer electrons, so lower ionization energy." }
+  ],
+  successive: [
+    { q: "What is meant by 'successive ionization energies'?", a: "The energies required to remove subsequent electrons, one at a time, from a gaseous ion." },
+    { q: "Why does each successive ionization energy increase?", a: "Each electron removed leaves behind a more positively charged ion, so remaining electrons are held more tightly." },
+    { q: "Write the equation for the second ionization energy of sodium.", a: "Na⁺(g) → Na²⁺(g) + e⁻" },
+    { q: "Write the equation for the first ionization energy of magnesium.", a: "Mg(g) → Mg⁺(g) + e⁻" },
+    { q: "What does a large jump between successive ionization energies indicate?", a: "An electron has been removed from a new, inner shell closer to the nucleus." },
+    { q: "Between which ionization energies of sodium would you expect the largest jump? Why?", a: "Between the 1st and 2nd, because the 2nd electron comes from the inner shell (2p) rather than the outer 3s." },
+    { q: "If an element shows a big jump after the 3rd ionization energy, which group does it belong to?", a: "Group 3 (or Group 13) — it has 3 outer-shell electrons." },
+    { q: "For magnesium, which successive ionization energy shows the biggest jump?", a: "Between the 2nd and 3rd, because the 3rd electron is removed from the inner 2p shell." },
+    { q: "Why are successive ionization energies useful for determining group placement?", a: "The position of large jumps reveals how many electrons are in the outermost shell, indicating the group." },
+    { q: "Why is the second ionization energy always larger than the first?", a: "The electron is being removed from a positively charged ion, which holds electrons more strongly than a neutral atom." },
+    { q: "Write the equation for the third ionization energy of aluminum.", a: "Al²⁺(g) → Al³⁺(g) + e⁻" },
+    { q: "An element shows ionization energies: 738, 1451, 7733, 10540 kJ/mol. Which group is it in?", a: "Group 2 — the big jump is between the 2nd and 3rd, indicating 2 outer electrons." },
+    { q: "Why doesn't ionization energy increase smoothly?", a: "Jumps occur when electrons start being removed from inner, more strongly held shells." },
+    { q: "What's the trend within the same shell for successive ionizations?", a: "Successive energies increase gradually but stay in a similar range until a new shell is reached." },
+    { q: "Why is removing an electron from a fully-filled shell so difficult?", a: "Fully-filled shells are exceptionally stable, and inner shells are very close to the nucleus." },
+    { q: "What would the graph of log(IE) vs ionization number look like for sodium?", a: "A small step from 1→2, then a steady rise, with a smaller jump between the 9th and 10th (removing 1s electrons)." },
+    { q: "Successive IEs (kJ/mol): 590, 1145, 4912, 6491. Which group?", a: "Group 2 — large jump between 2nd and 3rd ionization." },
+    { q: "Why does Na's 2nd IE jump so dramatically compared to its 1st?", a: "The 2nd electron must be removed from the 2p shell, which is much closer to the nucleus and has no outer shielding." },
+    { q: "Write the equation for the second ionization of chlorine.", a: "Cl⁺(g) → Cl²⁺(g) + e⁻" },
+    { q: "If a Period 3 element has its first big IE jump after the 4th electron, what is it?", a: "Silicon (Si) — Group 14, with 4 valence electrons." },
+    { q: "Why must each successive ionization energy be defined separately?", a: "Because each removes a different electron from a progressively more positive ion, each with its own energy requirement." },
+    { q: "What does 'IE₁ < IE₂ < IE₃ ...' represent in general?", a: "The fact that removing successive electrons requires more energy due to increasing effective nuclear charge on the remaining electrons." }
+  ],
+  period: [
+    { q: "Why is ionization energy generally higher across a period than down a group?", a: "Across a period, nuclear charge rises with little shielding change, but down a group, added shells dominate, weakening attraction." },
+    { q: "Which has higher first ionization energy: Mg or Al? Explain.", a: "Mg — its outer electron is in 3s, while Al's is in 3p, slightly further out and higher energy, so easier to remove." },
+    { q: "Why does the first IE of P > S, breaking the period trend?", a: "P has a stable half-filled 3p³ configuration; removing an electron from S's 3p⁴ pairs is easier due to electron-pair repulsion." },
+    { q: "Compare the IEs of N and O. Which is higher and why?", a: "N has higher first IE — N has a stable half-filled 2p³, while O's paired 2p⁴ electron experiences repulsion making it easier to remove." },
+    { q: "Why does Li have a higher first IE than Na?", a: "Li's outer electron is in n=2, closer to the nucleus with less shielding than Na's n=3 electron." },
+    { q: "Which has higher IE: K or Ca?", a: "Ca — higher nuclear charge with similar shielding pulls the outer electrons more tightly." },
+    { q: "Explain why noble gases have the highest IEs in each period.", a: "They have fully filled outer shells, giving exceptional stability and maximum effective nuclear charge for their period." },
+    { q: "Which would you predict has higher first IE: Be or B? Why might the trend break?", a: "Be is higher — its outer electron is in the lower-energy 2s, while B's is in 2p which is slightly higher energy and easier to remove." },
+    { q: "Why does atomic size decrease across a period?", a: "Increasing nuclear charge pulls all electrons closer without significant added shielding." },
+    { q: "Why does atomic size increase down a group?", a: "Each new period adds an electron shell, increasing the distance from the nucleus." },
+    { q: "Across Period 3, which element has the highest first IE?", a: "Argon (Ar)." },
+    { q: "Down Group 1, list Li, Na, K, Rb, Cs in order of decreasing IE.", a: "Li > Na > K > Rb > Cs." },
+    { q: "Compare nuclear charge contribution across periods vs down groups.", a: "Across periods, increased nuclear charge wins, raising IE. Down groups, increased shielding and radius outweigh nuclear charge, lowering IE." },
+    { q: "Predict whether F or Cl has higher first IE, and why.", a: "F — smaller atomic radius and less shielding mean stronger attraction on outer electrons." },
+    { q: "Why does Mg have higher IE than Na but lower than Al's third IE?", a: "Across the period IE rises, but Al's 3rd IE involves removing an electron from inner shell 2p, far higher than Mg's first IE." },
+    { q: "Which element should have higher IE — Si or P? Why?", a: "P — higher nuclear charge across the period and the half-filled 3p³ stability." },
+    { q: "Why doesn't shielding increase significantly across a period?", a: "Electrons are being added to the same outer shell, which shields itself poorly." },
+    { q: "Compare Be, Mg, Ca first IEs.", a: "Be > Mg > Ca — IE decreases down Group 2 due to increasing atomic radius and shielding." },
+    { q: "Explain the small IE drop from N to O across Period 2.", a: "O has paired electrons in 2p creating extra electron-electron repulsion, lowering the energy needed to remove one." },
+    { q: "Why does He have a higher first IE than H?", a: "He has 2 protons attracting the 1s electrons, while H has only 1 proton — greater nuclear charge holds electrons tighter." },
+    { q: "Which would have higher IE: Cl or Br?", a: "Cl — smaller radius and less shielding." },
+    { q: "What overall pattern explains both period and group trends?", a: "Ionization energy depends on the balance of nuclear charge, atomic radius, and shielding — across periods nuclear charge dominates, down groups radius/shielding dominate." }
+  ]
+};
+
+const CATEGORY_NAMES = {
+  definition: "Definition & Trends",
+  successive: "Successive Ionization",
+  period: "Across Period vs Down Group"
+};
+
+/* ======================== GAME STATE ======================== */
+let state = {};
+
+function initState() {
+  state = {
+    players: [],            // [{id, name, role}]
+    turnOrder: [],          // array of valence player ids in order
+    currentTurnIdx: 0,
+    round: 1,
+    escaped: 0,             // # ionized
+    gameTimer: 5 * 60,      // 5 minutes in seconds
+    gameInterval: null,
+    answerTimer: 0,
+    answerInterval: null,
+    answerPaused: false,
+    pendingPullSteps: 0,
+    bonusPull: false,
+    // per-turn
+    currentValenceId: null,
+    currentRoll: null,
+    currentTimeLimit: 10,
+    currentRetries: 0,
+    questionCount: 1,
+    questionsCorrect: 0,
+    questionsAnswered: 0,
+    currentCategory: null,
+    currentQuestionIdx: null,
+    inDeathSave: false,
+    deathSaveQuestions: 3,
+    // tracking
+    usedQuestions: { definition: new Set(), successive: new Set(), period: new Set() },
+    shieldUsed: {},        // playerId -> bool
+    activeShielder: null,
+    pendingShieldRetry: false,
+    screenQueue: [],       // inner shell ids still to be asked this turn
+    deferredShielders: [], // inner shell ids who chose to decide later
+    // electron status: id -> { steps: 0, escaped: false, absorbed: false }
+    electronStatus: {}
+  };
+}
+
+initState();
+
+/* ======================== UTIL ======================== */
+function $(id) { return document.getElementById(id); }
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $('screen-' + id).classList.add('active');
+}
+function flash(color) {
+  const f = $('flash');
+  f.className = 'flash ' + color;
+  setTimeout(() => f.className = 'flash', 10);
+  setTimeout(() => { f.style.opacity = 0; }, 800);
+  setTimeout(() => { f.className = 'flash'; }, 900);
+}
+// Small outcome pop-up that floats up near a given electron in the atom diagram.
+function floatPopup(pid, text, kind) {
+  const wrap = document.querySelector('.atom-viz-wrap');
+  const dot = document.querySelector('#viz-electrons [data-pid="' + pid + '"]');
+  if (!wrap || !dot) return;
+  const wrapRect = wrap.getBoundingClientRect();
+  const dotRect = dot.getBoundingClientRect();
+  const pop = document.createElement('div');
+  pop.className = 'float-pop ' + (kind || 'good');
+  pop.textContent = text;
+  pop.style.left = (dotRect.left + dotRect.width / 2 - wrapRect.left) + 'px';
+  pop.style.top = (dotRect.top + dotRect.height / 2 - wrapRect.top) + 'px';
+  wrap.appendChild(pop);
+  setTimeout(() => pop.remove(), 1800);
+}
+function showModal(title, body) {
+  $('modal-title').textContent = title;
+  $('modal-body').innerHTML = body;
+  $('modal').classList.add('active');
+}
+function closeModal() { $('modal').classList.remove('active'); }
+
+function fmtTime(s) {
+  if (s < 0) s = 0;
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+
+/* ======================== SETUP SCREEN ======================== */
+const ROSTER_NAMES = ['Mason', 'Bernard', 'Yi Han', 'Kadence', 'Alfred', 'Teck Tai'];
+const ROLE_LABEL = { nucleus: 'Nucleus', inner: 'Inner Electron', valence: 'Valence Electron' };
+const ROLE_NEED = { nucleus: 1, inner: 2, valence: 3 };
+const ROLE_DEFS = [
+  { key: 'nucleus', label: 'Nucleus', sub: 'The pull at the centre' },
+  { key: 'inner', label: 'Inner Electron', sub: 'Screens the valence' },
+  { key: 'valence', label: 'Valence Electron', sub: 'Races to ionize' }
+];
+
+let setupRoster = [];
+let activeSetupIdx = 0;
+
+function renderSetup() {
+  setupRoster = ROSTER_NAMES.map((n, i) => ({ id: 'p' + i, name: n, role: '' }));
+  activeSetupIdx = 0;
+  renderRoster();
+}
+
+function renderRoster() {
+  renderRosterBar();
+  renderRosterPanel();
+  updateRoleCounter();
+}
+
+function roleCounts() {
+  const c = { nucleus: 0, inner: 0, valence: 0 };
+  setupRoster.forEach(p => { if (p.role) c[p.role]++; });
+  return c;
+}
+
+function renderRosterBar() {
+  const bar = $('roster-bar');
+  bar.innerHTML = '';
+  setupRoster.forEach((p, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'person-chip' + (i === activeSetupIdx ? ' active' : '');
+    const tagClass = p.role || 'unset';
+    const tagText = p.role ? ROLE_LABEL[p.role] : 'No role';
+    chip.innerHTML = `<span class="pname">${p.name}</span><span class="ptag ${tagClass}">${tagText}</span>`;
+    chip.onclick = () => { activeSetupIdx = i; renderRoster(); };
+    bar.appendChild(chip);
+  });
+}
+
+function renderRosterPanel() {
+  const panel = $('roster-panel');
+  const active = setupRoster[activeSetupIdx];
+  const counts = roleCounts();
+  let html = `<div class="sel-name">${active.name}</div>`;
+  ROLE_DEFS.forEach(r => {
+    const selected = active.role === r.key;
+    html += `<button class="role-option ${r.key}${selected ? ' selected' : ''}" onclick="assignRole('${r.key}')">`
+      + `${r.label} <span class="role-sub">${r.sub} &middot; ${counts[r.key]}/${ROLE_NEED[r.key]} assigned</span>`
+      + `</button>`;
+  });
+  panel.innerHTML = html;
+}
+
+window.assignRole = function(role) {
+  const active = setupRoster[activeSetupIdx];
+  if (active.role === role) {
+    active.role = '';
+  } else {
+    active.role = role;
+    // auto-advance to the next player still missing a role
+    const after = setupRoster.findIndex((p, i) => i > activeSetupIdx && !p.role);
+    const idx = after !== -1 ? after : setupRoster.findIndex(p => !p.role);
+    if (idx !== -1) activeSetupIdx = idx;
+  }
+  renderRoster();
+};
+
+function updateRoleCounter() {
+  const c = roleCounts();
+  const assigned = setupRoster.filter(p => p.role).length;
+  const ok = c.nucleus === 1 && c.inner === 2 && c.valence === 3 && assigned === 6;
+  const counter = $('role-counter');
+  counter.innerHTML = `Nucleus: ${c.nucleus}/1 &nbsp; Inner Shell: ${c.inner}/2 &nbsp; Valence: ${c.valence}/3 &nbsp; Assigned: ${assigned}/6`;
+  counter.className = 'role-counter' + (ok ? '' : ' bad');
+  $('start-rps').disabled = !ok;
+}
+
+$('start-rps').addEventListener('click', () => {
+  state.players = setupRoster.map(p => ({ id: p.id, name: p.name, role: p.role }));
+  // Initialize electron status for valence + inner shells
+  state.players.forEach(p => {
+    if (p.role === 'valence') {
+      state.electronStatus[p.id] = { steps: 0, escaped: false, absorbed: false };
+    }
+    if (p.role === 'inner') {
+      state.shieldUsed[p.id] = false;
+    }
+  });
+  renderRps();
+  showScreen('rps');
+});
+
+/* ======================== RPS SCREEN ======================== */
+let rpsResults = {};
+
+function renderRps() {
+  rpsResults = {};
+  const list = $('rps-list');
+  list.innerHTML = '';
+  const nonNucleus = state.players.filter(p => p.role !== 'nucleus');
+  nonNucleus.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'rps-row';
+    row.innerHTML = `
+      <div class="name">${p.name} <span style="font-size:11px; color:var(--gold-dim); margin-left:6px;">(${p.role})</span></div>
+      <div class="rps-buttons" data-pid="${p.id}">
+        <button onclick="setRps('${p.id}', 'win')">Won</button>
+        <button onclick="setRps('${p.id}', 'lose')">Lost</button>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+  updateRpsConfirm();
+}
+
+function setRps(pid, result) {
+  rpsResults[pid] = result;
+  const btns = document.querySelectorAll(`[data-pid="${pid}"] button`);
+  btns.forEach(b => b.classList.remove('selected', 'win', 'lose'));
+  btns[result === 'win' ? 0 : 1].classList.add('selected', result);
+  updateRpsConfirm();
+}
+
+function updateRpsConfirm() {
+  const nonNucleus = state.players.filter(p => p.role !== 'nucleus');
+  const allSet = nonNucleus.every(p => rpsResults[p.id]);
+  $('rps-confirm').disabled = !allSet;
+}
+
+$('rps-confirm').addEventListener('click', () => {
+  // Turn order: only valence electrons take turns. Winners first, then losers.
+  const valenceWinners = state.players.filter(p => p.role === 'valence' && rpsResults[p.id] === 'win').map(p => p.id);
+  const valenceLosers = state.players.filter(p => p.role === 'valence' && rpsResults[p.id] === 'lose').map(p => p.id);
+  state.turnOrder = [...valenceWinners, ...valenceLosers];
+  state.round = 1;
+  state.currentTurnIdx = 0;
+  startGameTimer();
+  goToPositioning();
+});
+
+/* ======================== POSITIONING ======================== */
+function goToPositioning() {
+  // Reset shields each round
+  Object.keys(state.shieldUsed).forEach(k => state.shieldUsed[k] = false);
+  $('round-num').textContent = state.round;
+  showScreen('positioning');
+}
+
+$('positioning-confirm').addEventListener('click', () => {
+  showScreen('turn');
+  startTurn();
+});
+
+/* ======================== GAME TIMER ======================== */
+function startGameTimer() {
+  if (state.gameInterval) clearInterval(state.gameInterval);
+  state.gameInterval = setInterval(() => {
+    state.gameTimer--;
+    updateGameTimerDisplay();
+    if (state.gameTimer <= 0) {
+      clearInterval(state.gameInterval);
+      state.gameInterval = null;
+      endGame('nucleus', 'time');
+    }
+  }, 1000);
+  updateGameTimerDisplay();
+}
+
+function updateGameTimerDisplay() {
+  $('game-timer-value').textContent = fmtTime(state.gameTimer);
+  $('game-timer').classList.toggle('crit', state.gameTimer <= 30);
+}
+
+/* ======================== TURN LOGIC ======================== */
+function getNextValencePlayer() {
+  // Find next non-escaped, non-absorbed valence in turn order
+  for (let i = 0; i < state.turnOrder.length; i++) {
+    const idx = (state.currentTurnIdx + i) % state.turnOrder.length;
+    const pid = state.turnOrder[idx];
+    const status = state.electronStatus[pid];
+    if (!status.escaped && !status.absorbed) {
+      state.currentTurnIdx = idx;
+      return pid;
+    }
+  }
+  return null;
+}
+
+function startTurn() {
+  // Handle bonus nucleus pull from absorption
+  if (state.bonusPull) {
+    state.bonusPull = false;
+    handleNucleusBonusPull();
+    return;
+  }
+
+  // Check if all valence escaped or absorbed
+  const active = state.players.filter(p => p.role === 'valence' && !state.electronStatus[p.id].escaped && !state.electronStatus[p.id].absorbed);
+  if (state.escaped >= 3) {
+    endGame('electrons', 'all-escaped');
+    return;
+  }
+  if (active.length === 0) {
+    endGame('nucleus', 'all-absorbed');
+    return;
+  }
+
+  const pid = getNextValencePlayer();
+  if (!pid) {
+    endGame('nucleus', 'all-absorbed');
+    return;
+  }
+
+  state.currentValenceId = pid;
+  state.currentRoll = null;
+  state.currentRetries = 0;
+  state.questionsCorrect = 0;
+  state.questionsAnswered = 0;
+  state.questionCount = state.escaped + 1;  // 1st escape = 1Q, 2nd = 2Q, 3rd = 3Q
+  state.inDeathSave = false;
+  state.activeShielder = null;
+  state.pendingShieldRetry = false;
+
+  const player = state.players.find(p => p.id === pid);
+  $('current-player-name').textContent = player.name;
+  $('turn-phase-heading').textContent = 'Phase: Dice Roll';
+
+  renderHud();
+  renderElectronPanel();
+
+  // Check if player is at 3 steps -> death save
+  if (state.electronStatus[pid].steps >= 3) {
+    state.inDeathSave = true;
+    $('death-save-name').textContent = player.name;
+    showPhase('death-save');
+    return;
+  }
+
+  showPhase('dice');
+}
+
+function handleNucleusBonusPull() {
+  // Nucleus pulls any remaining valence 1 step closer
+  const candidates = state.players.filter(p => p.role === 'valence' && !state.electronStatus[p.id].escaped && !state.electronStatus[p.id].absorbed);
+  if (candidates.length === 0) {
+    endGame('nucleus', 'all-absorbed');
+    return;
+  }
+  let body = '<p>The Nucleus absorbed an electron and gains a free pull. Select which remaining valence electron to pull 1 step closer:</p><div class="action-row" style="margin-top:14px; flex-direction:column;">';
+  candidates.forEach(p => {
+    body += `<button onclick="bonusPullPlayer('${p.id}')" style="margin-bottom:6px;">${p.name} (currently ${state.electronStatus[p.id].steps} steps pulled)</button>`;
+  });
+  body += '</div>';
+  showModal('Nucleus Bonus Pull', body);
+}
+
+window.bonusPullPlayer = function(pid) {
+  state.electronStatus[pid].steps = Math.min(3, state.electronStatus[pid].steps + 1);
+  closeModal();
+  flash('red');
+  renderElectronPanel();
+  setTimeout(() => startTurn(), 600);
+};
+
+function showPhase(name) {
+  ['dice', 'counter', 'category', 'shield-offer', 'shield-roll', 'question', 'death-save', 'turn-end'].forEach(p => {
+    $('phase-' + p).style.display = (p === name) ? 'block' : 'none';
+  });
+  const headings = {
+    dice: 'Phase: Dice Roll',
+    counter: 'Phase: Nucleus Counter-Roll',
+    category: 'Phase: Category Selection',
+    'shield-offer': 'Phase: Screening Effect?',
+    'shield-roll': 'Phase: Shielding Roll',
+    question: state.inDeathSave ? 'Phase: Death Save Gauntlet' : 'Phase: Question',
+    'death-save': 'Phase: Death Save Roll',
+    'turn-end': 'Phase: Turn End'
+  };
+  $('turn-phase-heading').textContent = headings[name] || '';
+}
+
+/* ======================== DICE ROLLS ======================== */
+window.rollValence = function(n) {
+  state.currentRoll = n;
+  if (n === 6) {
+    // advantage — but Nucleus counter-roll first
+    showPhase('counter');
+  } else if (n === 1) {
+    // Critical fail
+    $('turn-end-summary').className = 'roll-result crit';
+    $('turn-end-summary').innerHTML = `
+      <div class="label">Roll: 1</div>
+      <div class="effect">⚠ CRITICAL FAIL ⚠</div>
+      <div class="desc">Turn skipped. The Nucleus drags <strong>${currentPlayerName()}</strong> 1 step closer.</div>
+    `;
+    state.electronStatus[state.currentValenceId].steps = Math.min(3, state.electronStatus[state.currentValenceId].steps + 1);
+    flash('red');
+    renderElectronPanel();
+    showPhase('turn-end');
+  } else if (n === 2) {
+    // Nucleus picks category
+    state.currentTimeLimit = 7;
+    showPhase('category');
+  } else {
+    // 3,4,5 — direct to shield offer
+    if (n === 3) state.currentTimeLimit = 7;
+    else state.currentTimeLimit = 10;
+    state.currentRetries = 0;
+    pickRandomCategory();
+    offerShielding();
+  }
+};
+
+window.rollNucleus = function(n) {
+  if (n >= 4) {
+    // cancel advantage
+    state.currentTimeLimit = 10;
+    state.currentRetries = 0;
+    pickRandomCategory();
+    $('shield-roll-summary').className = 'roll-result';
+    $('shield-roll-summary').innerHTML = `
+      <div class="label">Counter-Roll: ${n}</div>
+      <div class="effect">Advantage Cancelled</div>
+      <div class="desc">Nuclear charge overpowers the surge. Normal: 10 seconds, no retry.</div>
+    `;
+    offerShielding();
+  } else {
+    // advantage stands
+    state.currentTimeLimit = 15;
+    state.currentRetries = 1;
+    pickRandomCategory();
+    $('shield-roll-summary').className = 'roll-result adv';
+    $('shield-roll-summary').innerHTML = `
+      <div class="label">Counter-Roll: ${n}</div>
+      <div class="effect">Advantage Stands ⚡</div>
+      <div class="desc">Shielding overpowers nuclear charge. 15 seconds, 1 retry granted.</div>
+    `;
+    offerShielding();
+  }
+};
+
+window.pickCategory = function(cat) {
+  state.currentCategory = cat;
+  pickQuestionInCategory(cat);
+  offerShielding();
+};
+
+function pickRandomCategory() {
+  const cats = ['definition', 'successive', 'period'];
+  // pick a category that still has unused questions
+  const available = cats.filter(c => state.usedQuestions[c].size < QUESTIONS[c].length);
+  if (available.length === 0) {
+    // shouldn't happen — but reset if so
+    cats.forEach(c => state.usedQuestions[c].clear());
+  }
+  const pool = available.length > 0 ? available : cats;
+  const cat = pool[Math.floor(Math.random() * pool.length)];
+  pickQuestionInCategory(cat);
+}
+
+function pickQuestionInCategory(cat) {
+  state.currentCategory = cat;
+  const all = QUESTIONS[cat];
+  const unused = [];
+  for (let i = 0; i < all.length; i++) {
+    if (!state.usedQuestions[cat].has(i)) unused.push(i);
+  }
+  if (unused.length === 0) {
+    state.usedQuestions[cat].clear();
+    for (let i = 0; i < all.length; i++) unused.push(i);
+  }
+  state.currentQuestionIdx = unused[Math.floor(Math.random() * unused.length)];
+}
+
+/* ======================== SHIELDING ========================
+   New rule: before the Nucleus poses the question, each inner shell
+   electron with an unused shield is asked — one pop-up at a time —
+   whether to give the screening effect NOW (certain to hold) or to
+   DECIDE LATER (they may still screen during the question, but only
+   by rolling the dice, with an uncertain outcome).
+*/
+function buildShieldSummary() {
+  // Preserve a nucleus counter-roll summary if one is already shown.
+  if (!$('shield-roll-summary').innerHTML.trim() || !$('shield-roll-summary').innerHTML.includes('Counter-Roll')) {
+    $('shield-roll-summary').className = 'roll-result' + (state.currentTimeLimit === 15 ? ' adv' : (state.currentTimeLimit === 7 ? ' crit' : ''));
+    let effectText = 'Normal: 10 seconds';
+    let descText = '';
+    if (state.currentRoll === 3) { effectText = 'Disadvantage'; descText = '7 seconds. No retry.'; }
+    else if (state.currentRoll === 2) { effectText = 'Disadvantage'; descText = '7 seconds. Nucleus chose the category.'; }
+    else if (state.currentTimeLimit === 15) { effectText = 'Advantage ⚡'; descText = '15 seconds. 1 retry.'; }
+    else descText = 'Standard difficulty.';
+    $('shield-roll-summary').innerHTML = `
+      <div class="label">Roll: ${state.currentRoll}</div>
+      <div class="effect">${effectText}</div>
+      <div class="desc">${descText}</div>
+    `;
+  }
+}
+
+// Entry point — called after the dice/category resolves, before the question.
+function offerShielding() {
+  buildShieldSummary();
+  state.deferredShielders = [];
+  const eligible = state.players.filter(p => p.role === 'inner' && !state.shieldUsed[p.id]);
+  if (eligible.length === 0) {
+    startQuestion();
+    return;
+  }
+  state.screenQueue = eligible.map(p => p.id);
+  $('shield-buttons').innerHTML = '';
+  showPhase('shield-offer');
+  // Let the turn frame paint behind the overlay before the first pop-up.
+  setTimeout(askNextScreening, 250);
+}
+
+let _screenPid = null;
+function askNextScreening() {
+  if (!state.screenQueue || state.screenQueue.length === 0) {
+    startQuestion();
+    return;
+  }
+  _screenPid = state.screenQueue.shift();
+  const p = state.players.find(x => x.id === _screenPid);
+  $('screen-modal-name').textContent = p.name;
+  $('screen-modal').classList.add('active');
+}
+
+function closeScreenModal() { $('screen-modal').classList.remove('active'); }
+
+function screenDecision(choice) {
+  closeScreenModal();
+  const pid = _screenPid;
+  if (choice === 'now') {
+    // Screening now is certain — it holds.
+    state.shieldUsed[pid] = true;
+    state.currentRetries += 1;
+    renderElectronPanel();
+    floatPopup(pid, 'Screening Worked!', 'good');
+    flash('gold');
+    setTimeout(askNextScreening, 1000);
+  } else {
+    // Defer — keep the option, but using it later requires a dice roll.
+    state.deferredShielders.push(pid);
+    askNextScreening();
+  }
+}
+
+$('screen-now-btn').addEventListener('click', () => screenDecision('now'));
+$('screen-later-btn').addEventListener('click', () => screenDecision('later'));
+
+// Render the "invoke screening (roll dice)" controls for deferred inner shells.
+function renderDeferredShieldArea() {
+  const area = $('deferred-shield-area');
+  if (!area) return;
+  area.innerHTML = '';
+  const pending = (state.deferredShielders || []).filter(pid => !state.shieldUsed[pid]);
+  pending.forEach(pid => {
+    const p = state.players.find(x => x.id === pid);
+    const btn = document.createElement('button');
+    btn.innerHTML = `🛡 ${p.name}: Invoke Screening <span style="opacity:.7;">(roll the dice)</span>`;
+    btn.onclick = () => invokeDeferredShield(pid);
+    area.appendChild(btn);
+  });
+}
+
+// A deferred inner shell gambles on the dice mid-question.
+window.invokeDeferredShield = function(pid) {
+  state.answerPaused = true;
+  state.activeShielder = pid;
+  const p = state.players.find(x => x.id === pid);
+  $('shielder-name').textContent = p.name;
+  showPhase('shield-roll');
+};
+
+window.rollShield = function(n) {
+  const pid = state.activeShielder;
+  state.shieldUsed[pid] = true;
+  state.deferredShielders = (state.deferredShielders || []).filter(x => x !== pid);
+  renderElectronPanel();
+  if (n >= 4) {
+    state.currentRetries += 1;
+    flash('gold');
+    floatPopup(pid, 'Screening Worked!', 'good');
+  } else {
+    flash('red');
+    floatPopup(pid, 'Screening Failed!', 'bad');
+  }
+  setTimeout(resumeQuestionAfterShield, 1200);
+};
+
+function resumeQuestionAfterShield() {
+  showPhase('question');
+  renderDeferredShieldArea();
+  state.answerPaused = false;
+}
+
+/* ======================== QUESTION PHASE ======================== */
+function startQuestion() {
+  showPhase('question');
+  const q = QUESTIONS[state.currentCategory][state.currentQuestionIdx];
+  $('q-category').textContent = CATEGORY_NAMES[state.currentCategory];
+  $('q-text').textContent = q.q;
+  $('q-answer').textContent = q.a;
+  $('q-answer').classList.remove('shown');
+  state.usedQuestions[state.currentCategory].add(state.currentQuestionIdx);
+
+  // Gauntlet tracker
+  renderGauntletTracker();
+
+  // Deferred inner shells may still invoke screening (by rolling the dice).
+  renderDeferredShieldArea();
+
+  state.answerPaused = false;
+  $('pause-btn').textContent = 'Pause Timer';
+  startAnswerTimer(state.currentTimeLimit);
+}
+
+function renderGauntletTracker() {
+  const tracker = $('gauntlet-tracker');
+  tracker.innerHTML = '';
+  for (let i = 0; i < state.questionCount; i++) {
+    const pip = document.createElement('div');
+    pip.className = 'gauntlet-pip';
+    pip.textContent = i + 1;
+    if (i < state.questionsAnswered) pip.classList.add('done');
+    else if (i === state.questionsAnswered) pip.classList.add('current');
+    tracker.appendChild(pip);
+  }
+}
+
+function startAnswerTimer(seconds) {
+  state.answerTimer = seconds;
+  updateAnswerTimerDisplay();
+  if (state.answerInterval) clearInterval(state.answerInterval);
+  state.answerInterval = setInterval(() => {
+    if (state.answerPaused) return;
+    state.answerTimer--;
+    updateAnswerTimerDisplay();
+    if (state.answerTimer <= 0) {
+      clearInterval(state.answerInterval);
+      state.answerInterval = null;
+      // time up — treat as incorrect
+      markAnswer(false);
+    }
+  }, 1000);
+}
+
+function updateAnswerTimerDisplay() {
+  $('answer-timer-value').textContent = state.answerTimer;
+  const at = $('answer-timer');
+  at.classList.remove('warn', 'crit');
+  if (state.answerTimer <= 3) at.classList.add('crit');
+  else if (state.answerTimer <= 5) at.classList.add('warn');
+}
+
+window.revealAnswer = function() { $('q-answer').classList.add('shown'); };
+window.pauseAnswerTimer = function() {
+  state.answerPaused = !state.answerPaused;
+  $('pause-btn').textContent = state.answerPaused ? 'Resume Timer' : 'Pause Timer';
+};
+
+window.markAnswer = function(correct) {
+  if (state.answerInterval) { clearInterval(state.answerInterval); state.answerInterval = null; }
+  if (correct) {
+    state.questionsCorrect++;
+    state.questionsAnswered++;
+    flash('green');
+    floatPopup(state.currentValenceId, 'Correct!', 'good');
+    if (state.questionsAnswered >= state.questionCount) {
+      // Ionized!
+      handleIonization();
+      return;
+    }
+    // next question in gauntlet
+    setTimeout(() => { pickRandomCategory(); startQuestion(); }, 700);
+  } else {
+    floatPopup(state.currentValenceId, 'Wrong!', 'bad');
+    // Incorrect — check retries
+    if (state.currentRetries > 0) {
+      state.currentRetries--;
+      flash('red');
+      showModal('Retry Granted',
+        `Incorrect — but a retry is available. The same player attempts a new question.`);
+      setTimeout(() => { closeModal(); pickRandomCategory(); startQuestion(); }, 1500);
+    } else {
+      flash('red');
+      // Failed — pull 1 step closer
+      const status = state.electronStatus[state.currentValenceId];
+      status.steps = Math.min(3, status.steps + 1);
+      if (state.inDeathSave) {
+        // Death save fail = absorbed
+        absorbCurrent();
+        return;
+      }
+      $('turn-end-summary').className = 'roll-result crit';
+      $('turn-end-summary').innerHTML = `
+        <div class="label">Failed</div>
+        <div class="effect">Pulled 1 Step Closer</div>
+        <div class="desc"><strong>${currentPlayerName()}</strong> is now ${status.steps} step${status.steps !== 1 ? 's' : ''} from the Nucleus.</div>
+      `;
+      renderElectronPanel();
+      showPhase('turn-end');
+    }
+  }
+};
+
+function handleIonization() {
+  state.escaped++;
+  state.electronStatus[state.currentValenceId].escaped = true;
+  flash('gold');
+  const name = currentPlayerName();
+  const ordinal = ['1st', '2nd', '3rd'][state.escaped - 1] || (state.escaped + 'th');
+  $('turn-end-summary').className = 'roll-result adv';
+  $('turn-end-summary').innerHTML = `
+    <div class="label">— IONIZATION SUCCESS —</div>
+    <div class="effect">⚡ ${name} HAS ESCAPED ⚡</div>
+    <div class="desc">${ordinal} electron to ionize.</div>
+  `;
+  renderElectronPanel();
+  renderHud();
+  if (state.escaped >= 3) {
+    setTimeout(() => endGame('electrons', 'all-escaped'), 1200);
+    return;
+  }
+  showPhase('turn-end');
+}
+
+function absorbCurrent() {
+  state.electronStatus[state.currentValenceId].absorbed = true;
+  state.bonusPull = true;  // Nucleus gets bonus pull next
+  flash('red');
+  const name = currentPlayerName();
+  $('turn-end-summary').className = 'roll-result crit';
+  $('turn-end-summary').innerHTML = `
+    <div class="label">— ABSORBED —</div>
+    <div class="effect">${name} IS LOST</div>
+    <div class="desc">Removed from the game. The Nucleus may pull a remaining electron 1 step closer on its bonus turn.</div>
+  `;
+  renderElectronPanel();
+  showPhase('turn-end');
+}
+
+window.rollDeathSave = function(n) {
+  if (n >= 5) {
+    state.questionCount = 1;
+    showModal('Mercy Granted', 'The dice favor the desperate. Death save gauntlet reduced to <strong>1 question</strong>.');
+  } else {
+    state.questionCount = 3;
+    showModal('No Mercy', 'The Nucleus shows no quarter. Full <strong>3-question</strong> gauntlet.');
+  }
+  setTimeout(() => {
+    closeModal();
+    state.currentTimeLimit = 10;
+    state.currentRetries = 0;
+    pickRandomCategory();
+    startQuestion();
+  }, 1600);
+};
+
+window.advanceTurn = function() {
+  state.currentTurnIdx = (state.currentTurnIdx + 1) % state.turnOrder.length;
+  // Check if we wrapped around — new round
+  // For simplicity: after every full cycle through living valence electrons, start new round
+  // We track this by counting turns since last positioning
+  state._turnsThisRound = (state._turnsThisRound || 0) + 1;
+  const livingValence = state.players.filter(p => p.role === 'valence' && !state.electronStatus[p.id].escaped && !state.electronStatus[p.id].absorbed).length;
+  if (state._turnsThisRound >= livingValence) {
+    state.round++;
+    state._turnsThisRound = 0;
+    goToPositioning();
+  } else {
+    startTurn();
+  }
+};
+
+function currentPlayerName() {
+  const p = state.players.find(x => x.id === state.currentValenceId);
+  return p ? p.name : '???';
+}
+
+/* ======================== HUD & PANELS ======================== */
+function renderHud() {
+  $('hud-round').textContent = state.round;
+  $('hud-escaped').textContent = state.escaped + ' / 3';
+}
+
+function renderAtomViz() {
+  const svg = $('atom-viz');
+  if (!svg) return;
+  const CENTER_X = 230, CENTER_Y = 230;
+  // Radii by step count (3 = arm's length / danger; 0 = full outer valence ring)
+  const VALENCE_RADII = { 0: 215, 1: 185, 2: 150, 3: 80 };
+  const INNER_RADIUS = 110;
+  const ESCAPED_RADIUS = 280;
+
+  // Nucleus label
+  const nuc = state.players.find(p => p.role === 'nucleus');
+  $('viz-nucleus-label').textContent = nuc ? nuc.name.slice(0, 8) : 'NUC';
+
+  // Inner shell electrons — positioned at top & bottom
+  const inners = state.players.filter(p => p.role === 'inner');
+  const innerAngles = [-Math.PI / 2, Math.PI / 2]; // top, bottom
+
+  // Valence electrons — at left, lower-right, upper-right (or evenly spaced)
+  const valences = state.players.filter(p => p.role === 'valence');
+  const valenceAngles = [Math.PI, Math.PI / 3, -Math.PI / 3]; // ~180°, ~60°, ~-60°
+
+  const electronsG = $('viz-electrons');
+  const labelsG = $('viz-labels');
+  const haloG = $('viz-halo');
+  electronsG.innerHTML = '';
+  labelsG.innerHTML = '';
+  haloG.innerHTML = '';
+
+  // Inner shells
+  inners.forEach((p, i) => {
+    const angle = innerAngles[i] || (i * Math.PI);
+    const cx = CENTER_X + Math.cos(angle) * INNER_RADIUS;
+    const cy = CENTER_Y + Math.sin(angle) * INNER_RADIUS;
+    const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    c.setAttribute('cx', cx);
+    c.setAttribute('cy', cy);
+    c.setAttribute('r', 16);
+    c.setAttribute('class', 'electron-dot inner');
+    c.setAttribute('data-pid', p.id);
+    electronsG.appendChild(c);
+
+    const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    t.setAttribute('class', 'electron-label');
+    t.setAttribute('x', cx);
+    t.setAttribute('y', cy + 32);
+    t.textContent = p.name.slice(0, 9);
+    labelsG.appendChild(t);
+  });
+
+  // Valence electrons
+  valences.forEach((p, i) => {
+    const status = state.electronStatus[p.id];
+    const angle = valenceAngles[i] || (i * 2 * Math.PI / 3);
+    let r = VALENCE_RADII[status.steps] ?? VALENCE_RADII[3];
+    let cx, cy, opacity = 1, klass = 'electron-dot valence';
+    if (status.escaped) {
+      cx = CENTER_X + Math.cos(angle) * ESCAPED_RADIUS;
+      cy = CENTER_Y + Math.sin(angle) * ESCAPED_RADIUS;
+      klass = 'electron-dot escaped';
+      opacity = 0.85;
+    } else if (status.absorbed) {
+      cx = CENTER_X;
+      cy = CENTER_Y;
+      klass = 'electron-dot valence absorbed';
+      opacity = 0;
+    } else {
+      cx = CENTER_X + Math.cos(angle) * r;
+      cy = CENTER_Y + Math.sin(angle) * r;
+    }
+
+    // Pull line if being pulled in
+    if (!status.escaped && !status.absorbed && status.steps > 0) {
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('class', 'pull-line');
+      line.setAttribute('x1', CENTER_X);
+      line.setAttribute('y1', CENTER_Y);
+      line.setAttribute('x2', cx);
+      line.setAttribute('y2', cy);
+      electronsG.appendChild(line);
+    }
+
+    const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    c.setAttribute('cx', cx);
+    c.setAttribute('cy', cy);
+    c.setAttribute('r', status.escaped ? 12 : 18);
+    c.setAttribute('class', klass);
+    c.setAttribute('data-pid', p.id);
+    c.setAttribute('opacity', opacity);
+    electronsG.appendChild(c);
+
+    if (!status.absorbed) {
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('class', 'electron-label');
+      t.setAttribute('x', cx);
+      t.setAttribute('y', cy + 36);
+      t.setAttribute('opacity', opacity);
+      let suffix = '';
+      if (status.escaped) suffix = ' ⚡';
+      else if (status.steps > 0) suffix = ` (-${status.steps})`;
+      t.textContent = p.name.slice(0, 9) + suffix;
+      labelsG.appendChild(t);
+    }
+
+    // Halo on current player
+    if (state.currentValenceId === p.id && !status.escaped && !status.absorbed) {
+      const halo = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      halo.setAttribute('class', 'current-turn-halo');
+      halo.setAttribute('cx', cx);
+      halo.setAttribute('cy', cy);
+      halo.setAttribute('r', 26);
+      halo.setAttribute('stroke-dasharray', '6 4');
+      haloG.appendChild(halo);
+    }
+  });
+}
+
+function renderElectronPanel() {
+  renderAtomViz();
+  const panel = $('electron-panel');
+  panel.innerHTML = '';
+
+  // Nucleus
+  const nuc = state.players.find(p => p.role === 'nucleus');
+  if (nuc) {
+    const row = document.createElement('div');
+    row.className = 'electron-row';
+    row.innerHTML = `
+      <div class="name">${nuc.name} <span class="role-tag nuc">Nucleus</span></div>
+      <div class="meta">Center</div>
+    `;
+    panel.appendChild(row);
+  }
+
+  // Inner shells
+  state.players.filter(p => p.role === 'inner').forEach(p => {
+    const used = state.shieldUsed[p.id];
+    const row = document.createElement('div');
+    row.className = 'electron-row';
+    row.innerHTML = `
+      <div class="name">${p.name} <span class="role-tag inner">Inner</span></div>
+      <div class="meta">Shield: <span class="${used ? 'shield-used' : 'shield-ok'}">${used ? '⊗ Used' : '✓ Available'}</span></div>
+    `;
+    panel.appendChild(row);
+  });
+
+  // Valence
+  state.players.filter(p => p.role === 'valence').forEach(p => {
+    const status = state.electronStatus[p.id];
+    const row = document.createElement('div');
+    row.className = 'electron-row';
+    if (status.escaped) row.classList.add('escaped');
+    if (status.absorbed) row.classList.add('absorbed');
+    let pips = '';
+    for (let i = 0; i < 3; i++) {
+      pips += `<span class="steps-pip ${i < status.steps ? 'filled' : ''}"></span>`;
+    }
+    let metaText = '';
+    if (status.escaped) metaText = '<span style="color:var(--green);">⚡ Ionized</span>';
+    else if (status.absorbed) metaText = '<span style="color:var(--red-bright);">✘ Absorbed</span>';
+    else metaText = `Pulled: ${pips}`;
+    row.innerHTML = `
+      <div class="name">${p.name} <span class="role-tag">Valence</span></div>
+      <div class="meta">${metaText}</div>
+    `;
+    panel.appendChild(row);
+  });
+}
+
+/* ======================== END GAME ======================== */
+function endGame(winner, reason) {
+  if (state.gameInterval) { clearInterval(state.gameInterval); state.gameInterval = null; }
+  if (state.answerInterval) { clearInterval(state.answerInterval); state.answerInterval = null; }
+
+  const verdict = $('end-verdict');
+  const flavor = $('end-flavor');
+  const stats = $('end-stats');
+
+  if (winner === 'electrons') {
+    verdict.textContent = '⚡ ELECTRONS VICTORIOUS ⚡';
+    verdict.className = 'verdict victory';
+    flavor.innerHTML = '<em>"The atom shatters its bonds. Three electrons break free, leaving behind a charged ion. The kinetic surge of liberation echoes through the orbital field — ionization complete."</em>';
+  } else {
+    verdict.textContent = '✘ THE NUCLEUS HOLDS ✘';
+    verdict.className = 'verdict defeat';
+    let reasonText = '';
+    if (reason === 'time') reasonText = '<em>"The timer ran dry. Nuclear charge proved too strong; the atom remained stable. The electrons sink back into their orbitals, defeated by inertia and pull."</em>';
+    else if (reason === 'all-absorbed') reasonText = '<em>"All valence electrons absorbed. The atom retains its full complement, untouchable. Nuclear authority is unchallenged."</em>';
+    flavor.innerHTML = reasonText;
+  }
+
+  // stats
+  const absorbed = state.players.filter(p => p.role === 'valence' && state.electronStatus[p.id].absorbed).length;
+  stats.innerHTML = `
+    <div>Escaped: ${state.escaped} / 3</div>
+    <div>Absorbed: ${absorbed}</div>
+    <div>Time remaining: ${fmtTime(Math.max(0, state.gameTimer))}</div>
+    <div>Rounds played: ${state.round}</div>
+  `;
+
+  showScreen('end');
+}
+
+window.confirmAbort = function() {
+  if (confirm('Abort the current game and return to setup?')) {
+    resetGame();
+  }
+};
+
+window.resetGame = function() {
+  if (state.gameInterval) clearInterval(state.gameInterval);
+  if (state.answerInterval) clearInterval(state.answerInterval);
+  initState();
+  renderSetup();
+  showScreen('setup');
+};
+
+/* ======================== DICE FACE RENDERING ======================== */
+const PIP_PATTERNS = {
+  1: [4],
+  2: [0, 8],
+  3: [0, 4, 8],
+  4: [0, 2, 6, 8],
+  5: [0, 2, 4, 6, 8],
+  6: [0, 2, 3, 5, 6, 8]
+};
+
+function renderDiceFace(elId, n) {
+  const el = $(elId);
+  if (!el) return;
+  el.innerHTML = '';
+  const pattern = PIP_PATTERNS[n] || [4];
+  for (let i = 0; i < 9; i++) {
+    const pip = document.createElement('div');
+    pip.className = 'pip' + (pattern.includes(i) ? '' : ' hidden');
+    el.appendChild(pip);
+  }
+}
+
+const DICE_TARGETS = {
+  valence: { el: 'dice-valence', btn: 'roll-valence-btn', handler: 'rollValence' },
+  nucleus: { el: 'dice-nucleus', btn: 'roll-nucleus-btn', handler: 'rollNucleus' },
+  shield:  { el: 'dice-shield',  btn: 'roll-shield-btn',  handler: 'rollShield'  },
+  death:   { el: 'dice-death',   btn: 'roll-death-btn',   handler: 'rollDeathSave' }
+};
+
+window.animateRoll = function(kind) {
+  const target = DICE_TARGETS[kind];
+  if (!target) return;
+  const dieEl = $(target.el);
+  const btnEl = $(target.btn);
+  btnEl.disabled = true;
+  btnEl.textContent = '🎲 Rolling...';
+  dieEl.classList.add('rolling');
+  dieEl.classList.remove('settle');
+
+  const finalResult = Math.floor(Math.random() * 6) + 1;
+  let ticks = 0;
+  const totalTicks = 14 + Math.floor(Math.random() * 5);
+  const tickInterval = setInterval(() => {
+    const face = Math.floor(Math.random() * 6) + 1;
+    renderDiceFace(target.el, face);
+    ticks++;
+    if (ticks >= totalTicks) {
+      clearInterval(tickInterval);
+      dieEl.classList.remove('rolling');
+      renderDiceFace(target.el, finalResult);
+      dieEl.classList.add('settle');
+      setTimeout(() => {
+        btnEl.textContent = '🎲 Rolled: ' + finalResult;
+        window[target.handler](finalResult);
+      }, 450);
+    }
+  }, 75);
+};
+
+// Reset dice face & roll button each time a phase becomes visible
+const _origShowPhase = showPhase;
+showPhase = function(name) {
+  _origShowPhase(name);
+  const map = { dice: 'valence', counter: 'nucleus', 'shield-roll': 'shield', 'death-save': 'death' };
+  const kind = map[name];
+  if (kind) {
+    const target = DICE_TARGETS[kind];
+    renderDiceFace(target.el, Math.floor(Math.random() * 6) + 1);
+    const btnEl = $(target.btn);
+    btnEl.disabled = false;
+    btnEl.textContent = '🎲 Roll Dice';
+    $(target.el).classList.remove('rolling', 'settle');
+  }
+};
+
+/* ======================== INIT ======================== */
+renderSetup();
+
+</script>
+</body>
+</html>
