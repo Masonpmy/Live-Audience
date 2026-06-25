@@ -1021,7 +1021,7 @@
     <div class="turn-side">
       <div class="atom-caption">Boron &middot; &#8309;B<span class="sub">2 inner &middot; 3 valence electrons</span></div>
       <div class="atom-viz-wrap">
-        <svg class="atom-viz" id="atom-viz" viewBox="0 0 460 460">
+        <svg class="atom-viz" id="atom-viz" viewBox="-50 -50 560 560">
           <defs>
             <radialGradient id="nucleus-grad" cx="40%" cy="35%" r="65%">
               <stop offset="0%" stop-color="#ff7070"/>
@@ -1041,10 +1041,10 @@
           </defs>
           <!-- shells (inner to outer): inner electron shell, one intermediate shell,
                the original valence shell, and the outer progress shell -->
-          <circle class="orbit-ring inner-shell" cx="230" cy="230" r="110"/>
-          <circle class="orbit-ring" cx="230" cy="230" r="155"/>
-          <circle class="orbit-ring valence-ring" cx="230" cy="230" r="205"/>
-          <circle class="orbit-ring valence-ring-outer" cx="230" cy="230" r="245"/>
+          <circle class="orbit-ring inner-shell" cx="230" cy="230" r="105"/>
+          <circle class="orbit-ring" cx="230" cy="230" r="145"/>
+          <circle class="orbit-ring valence-ring" cx="230" cy="230" r="190"/>
+          <circle class="orbit-ring valence-ring-outer" cx="230" cy="230" r="222"/>
           <!-- nucleus glow + core -->
           <circle class="nucleus-glow" cx="230" cy="230" r="55"/>
           <circle class="nucleus-core" cx="230" cy="230" r="42"/>
@@ -1819,9 +1819,9 @@ function renderAtomViz() {
   //    0 = original outer shell (start),
   //   +1 = one shell further out (after one net correct).
   // Escape (+2) flings the electron past the outermost ring.
-  const LEVEL_RADII = { '-1': 155, '0': 205, '1': 245 };
-  const INNER_RADIUS = 110;       // inner electrons live here; valence may never enter
-  const ESCAPED_RADIUS = 300;
+  const LEVEL_RADII = { '-1': 145, '0': 190, '1': 222 };
+  const INNER_RADIUS = 105;       // inner electrons live here; valence may never enter
+  const ESCAPED_RADIUS = 245;
 
   // Nucleus label
   const nuc = state.players.find(p => p.role === 'nucleus');
