@@ -1039,12 +1039,11 @@
               <stop offset="100%" stop-color="#10406a"/>
             </radialGradient>
           </defs>
-          <!-- orbital rings: inner shell (2 e-) + valence shell (3 e-), inner rings mark pull steps -->
-          <circle class="orbit-ring danger-ring" cx="230" cy="230" r="80"/>
+          <!-- shells (inner to outer): inner electron shell, one intermediate shell,
+               the original valence shell, and the outer progress shell -->
           <circle class="orbit-ring inner-shell" cx="230" cy="230" r="110"/>
-          <circle class="orbit-ring" cx="230" cy="230" r="150"/>
-          <circle class="orbit-ring" cx="230" cy="230" r="180"/>
-          <circle class="orbit-ring valence-ring" cx="230" cy="230" r="210"/>
+          <circle class="orbit-ring" cx="230" cy="230" r="155"/>
+          <circle class="orbit-ring valence-ring" cx="230" cy="230" r="205"/>
           <circle class="orbit-ring valence-ring-outer" cx="230" cy="230" r="245"/>
           <!-- nucleus glow + core -->
           <circle class="nucleus-glow" cx="230" cy="230" r="55"/>
@@ -1283,14 +1282,21 @@ $('start-rps').addEventListener('click', () => {
   // Initialize electron status for valence + inner shells
   state.players.forEach(p => {
     if (p.role === 'valence') {
-      state.electronStatus[p.id] = { steps: 0, escaped: false, absorbed: false };
+      // level 0 = original outer shell. +1 per correct (escape at +2),
+      // -1 per wrong (floor at the intermediate shell, never the inner shell).
+      state.electronStatus[p.id] = { level: 0, escaped: false, absorbed: false };
     }
     if (p.role === 'inner') {
       state.shieldUsed[p.id] = false;
     }
   });
-  // Turn order: valence electrons take turns, in roster order.
-  state.turnOrder = state.players.filter(p => p.role === 'valence').map(p => p.id);
+  // Turn order: valence electrons take turns in a RANDOM order.
+  const valenceIds = state.players.filter(p => p.role === 'valence').map(p => p.id);
+  for (let i = valenceIds.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [valenceIds[i], valenceIds[j]] = [valenceIds[j], valenceIds[i]];
+  }
+  state.turnOrder = valenceIds;
   state.round = 1;
   state.currentTurnIdx = 0;
   startGameTimer();
@@ -1298,10 +1304,16 @@ $('start-rps').addEventListener('click', () => {
   startTurn();
 });
 
+/* ===== Valence shell-progress levels =====
+   0 = original outer shell (start). Escape (ionize) at +2.
+   Floor at -1: the single intermediate shell between the inner shell and the
+   original position — a valence electron can never enter the inner shell. */
+const ESCAPE_LEVEL = 2;
+const FLOOR_LEVEL = -1;
+
 /* ======================== POSITIONING ======================== */
 function goToPositioning() {
-  // Reset shields each round
-  Object.keys(state.shieldUsed).forEach(k => state.shieldUsed[k] = false);
+  // Screening is a once-per-GAME resource — shields are NOT reset between rounds.
   // Valence electrons rotate clockwise by one slot each new round (starting round 2).
   if (state.round > 1) {
     state.rotationOffset = ((state.rotationOffset || 0) + 1) % 3;
@@ -1421,14 +1433,14 @@ function handleNucleusBonusPull() {
   }
   let body = '<p>The Nucleus absorbed an electron and gains a free pull. Select which remaining valence electron to pull 1 step closer:</p><div class="action-row" style="margin-top:14px; flex-direction:column;">';
   candidates.forEach(p => {
-    body += `<button onclick="bonusPullPlayer('${p.id}')" style="margin-bottom:6px;">${p.name} (currently ${state.electronStatus[p.id].steps} steps pulled)</button>`;
+    body += `<button onclick="bonusPullPlayer('${p.id}')" style="margin-bottom:6px;">${p.name} (currently at level ${state.electronStatus[p.id].level})</button>`;
   });
   body += '</div>';
   showModal('Nucleus Bonus Pull', body);
 }
 
 window.bonusPullPlayer = function(pid) {
-  state.electronStatus[pid].steps = Math.min(3, state.electronStatus[pid].steps + 1);
+  state.electronStatus[pid].level = Math.max(FLOOR_LEVEL, state.electronStatus[pid].level - 1);
   closeModal();
   flash('red');
   renderElectronPanel();
@@ -1465,7 +1477,7 @@ window.rollValence = function(n) {
       <div class="effect">⚠ CRITICAL FAIL ⚠</div>
       <div class="desc">Turn skipped. The Nucleus drags <strong>${currentPlayerName()}</strong> 1 step closer.</div>
     `;
-    state.electronStatus[state.currentValenceId].steps = Math.min(3, state.electronStatus[state.currentValenceId].steps + 1);
+    state.electronStatus[state.currentValenceId].level = Math.max(FLOOR_LEVEL, state.electronStatus[state.currentValenceId].level - 1);
     flash('red');
     renderElectronPanel();
     showPhase('turn-end');
@@ -1612,17 +1624,20 @@ window.invokeDeferredShield = function(pid) {
 
 window.rollShield = function(n) {
   const pid = state.activeShielder;
-  state.shieldUsed[pid] = true;
+  // This attempt is over for this turn either way.
   state.deferredShielders = (state.deferredShielders || []).filter(x => x !== pid);
-  renderElectronPanel();
   if (n >= 4) {
+    // Screening is GIVEN — consume the one-per-game shield and hold the electron.
+    state.shieldUsed[pid] = true;
     state.screenedHold = true;
     flash('gold');
     floatPopup(pid, 'Screening Worked!', 'good');
   } else {
+    // Only ATTEMPTED — the shield is NOT consumed and may be used again later.
     flash('red');
     floatPopup(pid, 'Screening Failed!', 'bad');
   }
+  renderElectronPanel();
   setTimeout(resumeQuestionAfterShield, 1200);
 };
 
@@ -1689,25 +1704,32 @@ window.pauseAnswerTimer = function() {
 
 window.markAnswer = function(correct) {
   if (state.answerInterval) { clearInterval(state.answerInterval); state.answerInterval = null; }
+  const status = state.electronStatus[state.currentValenceId];
   if (correct) {
-    // One correct answer ionizes the electron — it escapes. Then the next one is up.
+    // Move OUT one shell. Two net correct answers (level +2) exit the atom.
     flash('green');
-    floatPopup(state.currentValenceId, 'Correct!', 'good');
-    handleIonization();
-  } else {
-    const status = state.electronStatus[state.currentValenceId];
-    if (state.screenedHold) {
-      // The inner shell's screening absorbs the failure — no pull this turn.
-      state.screenedHold = false;
-      flash('gold');
-      floatPopup(state.currentValenceId, 'Screening held — no pull!', 'good');
-    } else {
-      flash('red');
-      floatPopup(state.currentValenceId, 'Wrong!', 'bad');
-      status.steps = 1;  // dropped inside the inner shell
+    floatPopup(state.currentValenceId, 'Correct! ▲', 'good');
+    status.level = Math.min(ESCAPE_LEVEL, status.level + 1);
+    if (status.level >= ESCAPE_LEVEL) {
+      handleIonization();
+      return;
     }
     renderElectronPanel();
-    // One question only — pass to the next valence electron.
+    setTimeout(() => advanceTurn(), 900);
+  } else {
+    if (state.screenedHold) {
+      // Screening was given to this electron — it holds, so no drop this turn.
+      state.screenedHold = false;
+      flash('gold');
+      floatPopup(state.currentValenceId, 'Screening held — no drop!', 'good');
+    } else {
+      // Drop IN one shell, but never below the intermediate shell (never the inner shell).
+      flash('red');
+      floatPopup(state.currentValenceId, 'Wrong! ▼', 'bad');
+      status.level = Math.max(FLOOR_LEVEL, status.level - 1);
+    }
+    renderElectronPanel();
+    // One question per turn — pass to the next valence electron.
     setTimeout(() => advanceTurn(), 900);
   }
 };
@@ -1760,15 +1782,18 @@ window.rollDeathSave = function(n) {
 
 window.advanceTurn = function() {
   state.currentTurnIdx = (state.currentTurnIdx + 1) % state.turnOrder.length;
-  // Rotate valence slots clockwise after every turn.
-  state.rotationOffset = ((state.rotationOffset || 0) + 1) % 3;
-  // Each full 3-turn cycle = one new "round". Reset shields then.
+  // Each full cycle through the living valence electrons = one new "round".
+  // Shields are NOT reset — screening is a once-per-game resource.
   state._turnsThisRound = (state._turnsThisRound || 0) + 1;
   const livingValence = state.players.filter(p => p.role === 'valence' && !state.electronStatus[p.id].escaped).length;
-  if (state._turnsThisRound >= livingValence) {
+  if (livingValence > 0 && state._turnsThisRound >= livingValence) {
     state.round++;
     state._turnsThisRound = 0;
-    Object.keys(state.shieldUsed).forEach(k => state.shieldUsed[k] = false);
+    // Re-form the shells each round: rotate which valence stands in the open slot.
+    // (Kept per-round, not per-turn, so the formation is stable while everyone takes
+    //  their turn — otherwise it can couple with the random order and leave a valence
+    //  permanently in the unguarded slot, so screening would never be offered.)
+    state.rotationOffset = ((state.rotationOffset || 0) + 1) % 3;
   }
   renderHud();
   startTurn();
@@ -1789,14 +1814,14 @@ function renderAtomViz() {
   const svg = $('atom-viz');
   if (!svg) return;
   const CENTER_X = 230, CENTER_Y = 230;
-  // Radii by step count (3 = arm's length / danger; 0 = full outer valence ring)
-  // 2-question gauntlet: electrons sit on the outer valence ring (210), advance to
-  // the outermost ring (245) after 1 correct answer, then escape past it after 2.
-  // Binary position: outer valence ring (0) or pulled inside the inner shell (1).
-  const VALENCE_RADII = { 0: 210, 1: 75 };
-  const PROGRESS_RING = 245;
-  const INNER_RADIUS = 110;
-  const ESCAPED_RADIUS = 310;
+  // Valence radius by progress level:
+  //   -1 = intermediate shell (one shell out from the inner shell — the floor),
+  //    0 = original outer shell (start),
+  //   +1 = one shell further out (after one net correct).
+  // Escape (+2) flings the electron past the outermost ring.
+  const LEVEL_RADII = { '-1': 155, '0': 205, '1': 245 };
+  const INNER_RADIUS = 110;       // inner electrons live here; valence may never enter
+  const ESCAPED_RADIUS = 300;
 
   // Nucleus label
   const nuc = state.players.find(p => p.role === 'nucleus');
@@ -1842,12 +1867,7 @@ function renderAtomViz() {
   valences.forEach((p, i) => {
     const status = state.electronStatus[p.id];
     const angle = valenceAngles[i] || (i * 2 * Math.PI / 3);
-    let r = VALENCE_RADII[Math.min(status.steps, 1)] ?? VALENCE_RADII[1];
-    // Mid-gauntlet progress: after 1 correct of the 2-question gauntlet,
-    // the active electron sits on the outer progress ring.
-    if (state.currentValenceId === p.id && state.questionsCorrect === 1 && !status.escaped && !status.absorbed) {
-      r = PROGRESS_RING;
-    }
+    const r = LEVEL_RADII[String(status.level)] ?? LEVEL_RADII['0'];
     let cx, cy, opacity = 1, klass = 'electron-dot valence';
     if (status.escaped) {
       cx = CENTER_X + Math.cos(angle) * ESCAPED_RADIUS;
@@ -1864,8 +1884,8 @@ function renderAtomViz() {
       cy = CENTER_Y + Math.sin(angle) * r;
     }
 
-    // Pull line if being pulled in
-    if (!status.escaped && !status.absorbed && status.steps > 0) {
+    // Pull line if dropped below the original shell (being pulled in)
+    if (!status.escaped && !status.absorbed && status.level < 0) {
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
       line.setAttribute('class', 'pull-line');
       line.setAttribute('x1', CENTER_X);
@@ -1892,7 +1912,8 @@ function renderAtomViz() {
       t.setAttribute('opacity', opacity);
       let suffix = '';
       if (status.escaped) suffix = ' ⚡';
-      else if (status.steps > 0) suffix = ` (-${status.steps})`;
+      else if (status.level > 0) suffix = ` (+${status.level})`;
+      else if (status.level < 0) suffix = ` (${status.level})`;
       t.textContent = p.name.slice(0, 9) + suffix;
       labelsG.appendChild(t);
     }
@@ -1947,8 +1968,9 @@ function renderElectronPanel() {
     if (status.escaped) row.classList.add('escaped');
     let metaText = '';
     if (status.escaped) metaText = '<span style="color:var(--green);">⚡ Ionized</span>';
-    else if (status.steps >= 1) metaText = '<span style="color:var(--red-bright);">Inside Inner Shell</span>';
-    else metaText = '<span style="color:var(--gold);">Outer Shell</span>';
+    else if (status.level >= 1) metaText = `<span style="color:#80c8ff;">Outer Shell (+${status.level})</span>`;
+    else if (status.level <= -1) metaText = '<span style="color:var(--red-bright);">Intermediate Shell</span>';
+    else metaText = '<span style="color:var(--gold);">Original Shell</span>';
     row.innerHTML = `
       <div class="name">${p.name} <span class="role-tag">Valence</span></div>
       <div class="meta">${metaText}</div>
