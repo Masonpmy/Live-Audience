@@ -305,6 +305,8 @@
   }
   .atom-viz .orbit-ring.inner-shell { stroke: var(--gold); opacity: 0.7; stroke-dasharray: 6 4; }
   .atom-viz .orbit-ring.danger-ring { stroke: var(--red); opacity: 0.6; stroke-dasharray: 2 4; }
+  .atom-viz .orbit-ring.valence-ring { stroke: #5aaef0; opacity: 0.55; stroke-dasharray: 5 5; stroke-width: 1.5; }
+  .atom-viz .orbit-ring.valence-ring-outer { stroke: #80c8ff; opacity: 0.45; stroke-dasharray: 3 6; stroke-width: 1.2; }
   .atom-viz .nucleus-core {
     fill: url(#nucleus-grad);
     stroke: var(--red);
@@ -775,6 +777,30 @@
     font-family: 'Cinzel', serif; text-align: center; color: var(--gold-dim);
     font-size: 27px; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 21px;
   }
+  .screen-modal-recipient {
+    text-align: center;
+    margin: 0 0 18px;
+    font-family: 'Cormorant Garamond', serif;
+  }
+  .screen-modal-recipient .recipient-prefix {
+    display: block;
+    font-size: 28px;
+    color: var(--gold-dim);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-family: 'Cinzel', serif;
+    margin-bottom: 6px;
+  }
+  .screen-modal-recipient .recipient-name {
+    display: block;
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: clamp(54px, 12vw, 76px);
+    color: var(--red-bright);
+    text-shadow: 0 0 30px rgba(255,56,56,0.6), 0 3px 0 #000;
+    letter-spacing: 0.05em;
+    line-height: 1.05;
+  }
   .screen-modal-text { text-align: center; font-size: 40px; line-height: 1.45; color: var(--ink); margin-bottom: 9px; }
   #screen-modal .action-row { margin-top: 27px; gap: 15px; }
   #screen-modal .action-row button { font-size: 30px; padding: 22px 26px; }
@@ -944,23 +970,21 @@
         </div>
       </div>
 
-      <!-- PHASE: QUESTION -->
+      <!-- PHASE: QUESTION (asked verbally — the operator only marks the outcome) -->
       <div id="phase-question" style="display:none;">
-        <div class="gauntlet-tracker" id="gauntlet-tracker"></div>
-        <div class="question-box">
-          <div class="question-text" id="q-text"></div>
-          <div class="question-answer" id="q-answer"></div>
-        </div>
+        <p class="small-note">Ask the question aloud. Start the timer when they begin to answer, then mark the outcome.</p>
         <div class="answer-timer" id="answer-timer">
           <div class="value" id="answer-timer-value">10</div>
         </div>
-        <div class="deferred-shield-area" id="deferred-shield-area"></div>
         <div class="action-row">
+          <button class="full" id="start-timer-btn" onclick="startAnswerCountdown()">▶ Start 10s Timer</button>
+        </div>
+        <div class="deferred-shield-area" id="deferred-shield-area"></div>
+        <div class="action-row" style="margin-top:8px;">
           <button class="success" onclick="markAnswer(true)">✓ Correct</button>
-          <button class="danger" onclick="markAnswer(false)">✗ Incorrect</button>
+          <button class="danger" onclick="markAnswer(false)">✗ Wrong</button>
         </div>
         <div class="action-row" style="margin-top:8px;">
-          <button onclick="revealAnswer()">Reveal Answer</button>
           <button onclick="pauseAnswerTimer()" id="pause-btn">Pause Timer</button>
         </div>
       </div>
@@ -1019,8 +1043,9 @@
           <circle class="orbit-ring danger-ring" cx="230" cy="230" r="80"/>
           <circle class="orbit-ring inner-shell" cx="230" cy="230" r="110"/>
           <circle class="orbit-ring" cx="230" cy="230" r="150"/>
-          <circle class="orbit-ring" cx="230" cy="230" r="185"/>
-          <circle class="orbit-ring" cx="230" cy="230" r="215"/>
+          <circle class="orbit-ring" cx="230" cy="230" r="180"/>
+          <circle class="orbit-ring valence-ring" cx="230" cy="230" r="210"/>
+          <circle class="orbit-ring valence-ring-outer" cx="230" cy="230" r="245"/>
           <!-- nucleus glow + core -->
           <circle class="nucleus-glow" cx="230" cy="230" r="55"/>
           <circle class="nucleus-core" cx="230" cy="230" r="42"/>
@@ -1064,6 +1089,10 @@
   <div class="modal">
     <div class="screen-modal-name" id="screen-modal-name"></div>
     <div class="screen-modal-role">Inner Shell Electron</div>
+    <div class="screen-modal-recipient">
+      <span class="recipient-prefix">Will shield</span>
+      <span class="recipient-name" id="screen-modal-recipient-name"></span>
+    </div>
     <p class="screen-modal-text">Give the screening effect now? Wait, and screening later means rolling the dice — with no guarantee it holds.</p>
     <div class="action-row" style="margin-top:18px;">
       <button class="success" id="screen-now-btn">Screen Now</button>
@@ -1076,84 +1105,9 @@
 <div class="flash" id="flash"></div>
 
 <script>
-/* ======================== QUESTION BANK ======================== */
-const QUESTIONS = {
-  definition: [
-    { q: "Define first ionization energy.", a: "The energy required to remove the most loosely held electron from one mole of gaseous atoms to form one mole of gaseous +1 ions." },
-    { q: "State the units of ionization energy.", a: "kJ mol⁻¹ (kilojoules per mole)." },
-    { q: "Why is ionization energy always endothermic?", a: "Energy must be supplied to overcome the attraction between the nucleus and the electron being removed." },
-    { q: "Name three factors that affect ionization energy.", a: "Nuclear charge, atomic radius (distance from nucleus), and shielding by inner electrons." },
-    { q: "What is the general trend in first ionization energy across a period?", a: "It generally increases across a period from left to right." },
-    { q: "What is the general trend in first ionization energy down a group?", a: "It decreases down a group." },
-    { q: "Why does ionization energy increase across a period?", a: "Nuclear charge increases while shielding stays roughly the same and atomic radius decreases, so outer electrons are more strongly attracted." },
-    { q: "Why does ionization energy decrease down a group?", a: "Atomic radius and shielding increase, weakening the attraction between the nucleus and outer electrons, despite increased nuclear charge." },
-    { q: "Which has higher first ionization energy: Na or Mg? Why?", a: "Mg, because it has higher nuclear charge with similar shielding, holding outer electrons more tightly." },
-    { q: "What does a low ionization energy suggest about an element's reactivity?", a: "The element loses electrons easily, so it is highly reactive as a metal (good reducing agent)." },
-    { q: "Which element in Period 2 has the highest first ionization energy?", a: "Neon (Ne)." },
-    { q: "Which group has the lowest first ionization energies overall?", a: "Group 1 (alkali metals)." },
-    { q: "Why is ionization always defined for the gaseous state?", a: "So no energy is gained or lost from breaking intermolecular forces or lattice structures — only electron removal is measured." },
-    { q: "What is the 'shielding effect'?", a: "Inner electrons partially block the attraction of the nucleus on the outer electrons, reducing effective nuclear charge." },
-    { q: "Does effective nuclear charge increase or decrease across a period?", a: "It increases." },
-    { q: "Is energy released or absorbed during ionization?", a: "Absorbed — ionization is endothermic." },
-    { q: "Name the noble gas with the highest first ionization energy.", a: "Helium (He)." },
-    { q: "Why does helium have the highest first ionization energy of any element?", a: "It has the smallest atomic radius and no shielding from inner electrons, so its 1s electrons feel the full nuclear attraction." },
-    { q: "Compare the first ionization energies of Li and Cs.", a: "Li has a much higher first ionization energy because its outer electron is closer to the nucleus with less shielding than Cs." },
-    { q: "Why is the first ionization energy of K lower than Na?", a: "K's outer electron is in a higher energy level, further from the nucleus, with more shielding." },
-    { q: "What is meant by 'effective nuclear charge'?", a: "The net positive charge experienced by an outer electron after accounting for shielding by inner electrons." },
-    { q: "How does atomic radius affect ionization energy?", a: "Larger atomic radius means weaker attraction on outer electrons, so lower ionization energy." }
-  ],
-  successive: [
-    { q: "What is meant by 'successive ionization energies'?", a: "The energies required to remove subsequent electrons, one at a time, from a gaseous ion." },
-    { q: "Why does each successive ionization energy increase?", a: "Each electron removed leaves behind a more positively charged ion, so remaining electrons are held more tightly." },
-    { q: "Write the equation for the second ionization energy of sodium.", a: "Na⁺(g) → Na²⁺(g) + e⁻" },
-    { q: "Write the equation for the first ionization energy of magnesium.", a: "Mg(g) → Mg⁺(g) + e⁻" },
-    { q: "What does a large jump between successive ionization energies indicate?", a: "An electron has been removed from a new, inner shell closer to the nucleus." },
-    { q: "Between which ionization energies of sodium would you expect the largest jump? Why?", a: "Between the 1st and 2nd, because the 2nd electron comes from the inner shell (2p) rather than the outer 3s." },
-    { q: "If an element shows a big jump after the 3rd ionization energy, which group does it belong to?", a: "Group 3 (or Group 13) — it has 3 outer-shell electrons." },
-    { q: "For magnesium, which successive ionization energy shows the biggest jump?", a: "Between the 2nd and 3rd, because the 3rd electron is removed from the inner 2p shell." },
-    { q: "Why are successive ionization energies useful for determining group placement?", a: "The position of large jumps reveals how many electrons are in the outermost shell, indicating the group." },
-    { q: "Why is the second ionization energy always larger than the first?", a: "The electron is being removed from a positively charged ion, which holds electrons more strongly than a neutral atom." },
-    { q: "Write the equation for the third ionization energy of aluminum.", a: "Al²⁺(g) → Al³⁺(g) + e⁻" },
-    { q: "An element shows ionization energies: 738, 1451, 7733, 10540 kJ/mol. Which group is it in?", a: "Group 2 — the big jump is between the 2nd and 3rd, indicating 2 outer electrons." },
-    { q: "Why doesn't ionization energy increase smoothly?", a: "Jumps occur when electrons start being removed from inner, more strongly held shells." },
-    { q: "What's the trend within the same shell for successive ionizations?", a: "Successive energies increase gradually but stay in a similar range until a new shell is reached." },
-    { q: "Why is removing an electron from a fully-filled shell so difficult?", a: "Fully-filled shells are exceptionally stable, and inner shells are very close to the nucleus." },
-    { q: "What would the graph of log(IE) vs ionization number look like for sodium?", a: "A small step from 1→2, then a steady rise, with a smaller jump between the 9th and 10th (removing 1s electrons)." },
-    { q: "Successive IEs (kJ/mol): 590, 1145, 4912, 6491. Which group?", a: "Group 2 — large jump between 2nd and 3rd ionization." },
-    { q: "Why does Na's 2nd IE jump so dramatically compared to its 1st?", a: "The 2nd electron must be removed from the 2p shell, which is much closer to the nucleus and has no outer shielding." },
-    { q: "Write the equation for the second ionization of chlorine.", a: "Cl⁺(g) → Cl²⁺(g) + e⁻" },
-    { q: "If a Period 3 element has its first big IE jump after the 4th electron, what is it?", a: "Silicon (Si) — Group 14, with 4 valence electrons." },
-    { q: "Why must each successive ionization energy be defined separately?", a: "Because each removes a different electron from a progressively more positive ion, each with its own energy requirement." },
-    { q: "What does 'IE₁ < IE₂ < IE₃ ...' represent in general?", a: "The fact that removing successive electrons requires more energy due to increasing effective nuclear charge on the remaining electrons." }
-  ],
-  period: [
-    { q: "Why is ionization energy generally higher across a period than down a group?", a: "Across a period, nuclear charge rises with little shielding change, but down a group, added shells dominate, weakening attraction." },
-    { q: "Which has higher first ionization energy: Mg or Al? Explain.", a: "Mg — its outer electron is in 3s, while Al's is in 3p, slightly further out and higher energy, so easier to remove." },
-    { q: "Why does the first IE of P > S, breaking the period trend?", a: "P has a stable half-filled 3p³ configuration; removing an electron from S's 3p⁴ pairs is easier due to electron-pair repulsion." },
-    { q: "Compare the IEs of N and O. Which is higher and why?", a: "N has higher first IE — N has a stable half-filled 2p³, while O's paired 2p⁴ electron experiences repulsion making it easier to remove." },
-    { q: "Why does Li have a higher first IE than Na?", a: "Li's outer electron is in n=2, closer to the nucleus with less shielding than Na's n=3 electron." },
-    { q: "Which has higher IE: K or Ca?", a: "Ca — higher nuclear charge with similar shielding pulls the outer electrons more tightly." },
-    { q: "Explain why noble gases have the highest IEs in each period.", a: "They have fully filled outer shells, giving exceptional stability and maximum effective nuclear charge for their period." },
-    { q: "Which would you predict has higher first IE: Be or B? Why might the trend break?", a: "Be is higher — its outer electron is in the lower-energy 2s, while B's is in 2p which is slightly higher energy and easier to remove." },
-    { q: "Why does atomic size decrease across a period?", a: "Increasing nuclear charge pulls all electrons closer without significant added shielding." },
-    { q: "Why does atomic size increase down a group?", a: "Each new period adds an electron shell, increasing the distance from the nucleus." },
-    { q: "Across Period 3, which element has the highest first IE?", a: "Argon (Ar)." },
-    { q: "Down Group 1, list Li, Na, K, Rb, Cs in order of decreasing IE.", a: "Li > Na > K > Rb > Cs." },
-    { q: "Compare nuclear charge contribution across periods vs down groups.", a: "Across periods, increased nuclear charge wins, raising IE. Down groups, increased shielding and radius outweigh nuclear charge, lowering IE." },
-    { q: "Predict whether F or Cl has higher first IE, and why.", a: "F — smaller atomic radius and less shielding mean stronger attraction on outer electrons." },
-    { q: "Why does Mg have higher IE than Na but lower than Al's third IE?", a: "Across the period IE rises, but Al's 3rd IE involves removing an electron from inner shell 2p, far higher than Mg's first IE." },
-    { q: "Which element should have higher IE — Si or P? Why?", a: "P — higher nuclear charge across the period and the half-filled 3p³ stability." },
-    { q: "Why doesn't shielding increase significantly across a period?", a: "Electrons are being added to the same outer shell, which shields itself poorly." },
-    { q: "Compare Be, Mg, Ca first IEs.", a: "Be > Mg > Ca — IE decreases down Group 2 due to increasing atomic radius and shielding." },
-    { q: "Explain the small IE drop from N to O across Period 2.", a: "O has paired electrons in 2p creating extra electron-electron repulsion, lowering the energy needed to remove one." },
-    { q: "Why does He have a higher first IE than H?", a: "He has 2 protons attracting the 1s electrons, while H has only 1 proton — greater nuclear charge holds electrons tighter." },
-    { q: "Which would have higher IE: Cl or Br?", a: "Cl — smaller radius and less shielding." },
-    { q: "What overall pattern explains both period and group trends?", a: "Ionization energy depends on the balance of nuclear charge, atomic radius, and shielding — across periods nuclear charge dominates, down groups radius/shielding dominate." }
-  ]
-};
-
-// All questions pooled together — the category is never revealed to players.
-const ALL_QUESTIONS = [...QUESTIONS.definition, ...QUESTIONS.successive, ...QUESTIONS.period];
+/* ======================== QUESTIONS ========================
+   Questions are asked aloud by the players — none are stored or shown
+   by the app. The operator only records whether the answer was right. */
 
 /* ======================== GAME STATE ======================== */
 let state = {};
@@ -1164,6 +1118,7 @@ function initState() {
     turnOrder: [],          // array of valence player ids in order
     currentTurnIdx: 0,
     round: 1,
+    rotationOffset: 0,      // valence shells rotate clockwise each round
     escaped: 0,             // # ionized
     gameTimer: 5 * 60,      // 5 minutes in seconds
     gameInterval: null,
@@ -1190,6 +1145,7 @@ function initState() {
     pendingShieldRetry: false,
     screenQueue: [],       // inner shell ids still to be asked this turn
     deferredShielders: [], // inner shell ids who chose to decide later
+    screenedHold: false,   // active valence is screened — a wrong answer is forgiven
     // electron status: id -> { steps: 0, escaped: false, absorbed: false }
     electronStatus: {}
   };
@@ -1338,15 +1294,42 @@ $('start-rps').addEventListener('click', () => {
   state.round = 1;
   state.currentTurnIdx = 0;
   startGameTimer();
-  goToPositioning();
+  showScreen('turn');
+  startTurn();
 });
 
 /* ======================== POSITIONING ======================== */
 function goToPositioning() {
   // Reset shields each round
   Object.keys(state.shieldUsed).forEach(k => state.shieldUsed[k] = false);
+  // Valence electrons rotate clockwise by one slot each new round (starting round 2).
+  if (state.round > 1) {
+    state.rotationOffset = ((state.rotationOffset || 0) + 1) % 3;
+  }
   $('round-num').textContent = state.round;
   showScreen('positioning');
+}
+
+/* ===== 120° slot system (used by viz & shielding eligibility) =====
+   Three orbital slots at 120° spacing. Inner shells sit fixed in front
+   of slots 1 & 2; the valences rotate clockwise through all three. */
+const SLOT_ANGLES = [-Math.PI / 2, Math.PI / 6, 5 * Math.PI / 6]; // top, lower-right, lower-left
+const INNER_SLOT_IDXS = [1, 2]; // inner shells occupy lower-right and lower-left
+
+function valenceSlotIdx(valenceIdx) {
+  return (valenceIdx + (state.rotationOffset || 0)) % 3;
+}
+function innerShellPlayerForSlot(slotIdx) {
+  const k = INNER_SLOT_IDXS.indexOf(slotIdx);
+  if (k === -1) return null;
+  const inners = state.players.filter(p => p.role === 'inner');
+  return inners[k] || null;
+}
+function guardianForActiveValence() {
+  const valences = state.players.filter(p => p.role === 'valence');
+  const idx = valences.findIndex(p => p.id === state.currentValenceId);
+  if (idx < 0) return null;
+  return innerShellPlayerForSlot(valenceSlotIdx(idx));
 }
 
 $('positioning-confirm').addEventListener('click', () => {
@@ -1390,27 +1373,19 @@ function getNextValencePlayer() {
 }
 
 function startTurn() {
-  // Handle bonus nucleus pull from absorption
-  if (state.bonusPull) {
-    state.bonusPull = false;
-    handleNucleusBonusPull();
-    return;
-  }
-
-  // Check if all valence escaped or absorbed
-  const active = state.players.filter(p => p.role === 'valence' && !state.electronStatus[p.id].escaped && !state.electronStatus[p.id].absorbed);
+  const active = state.players.filter(p => p.role === 'valence' && !state.electronStatus[p.id].escaped);
   if (state.escaped >= 3) {
     endGame('electrons', 'all-escaped');
     return;
   }
   if (active.length === 0) {
-    endGame('nucleus', 'all-absorbed');
+    endGame('electrons', 'all-escaped');
     return;
   }
 
   const pid = getNextValencePlayer();
   if (!pid) {
-    endGame('nucleus', 'all-absorbed');
+    endGame('electrons', 'all-escaped');
     return;
   }
 
@@ -1419,27 +1394,22 @@ function startTurn() {
   state.currentRetries = 0;
   state.questionsCorrect = 0;
   state.questionsAnswered = 0;
-  state.questionCount = state.escaped + 1;  // 1st escape = 1Q, 2nd = 2Q, 3rd = 3Q
+  state.questionCount = 1;  // one question per turn, then the next electron answers
+  state.currentTimeLimit = 10;
   state.inDeathSave = false;
   state.activeShielder = null;
   state.pendingShieldRetry = false;
+  state.screenedHold = false;  // set if an inner shell screens this valence (forgives a wrong answer)
 
   const player = state.players.find(p => p.id === pid);
   $('current-player-name').textContent = player.name;
-  $('turn-phase-heading').textContent = 'Phase: Dice Roll';
 
   renderHud();
   renderElectronPanel();
 
-  // Check if player is at 3 steps -> death save
-  if (state.electronStatus[pid].steps >= 3) {
-    state.inDeathSave = true;
-    $('death-save-name').textContent = player.name;
-    showPhase('death-save');
-    return;
-  }
-
-  showPhase('dice');
+  // Skip the dice-roll phase — go straight to shielding offer, then the question.
+  pickRandomQuestion();
+  offerShielding();
 }
 
 function handleNucleusBonusPull() {
@@ -1537,21 +1507,8 @@ window.rollNucleus = function(n) {
   }
 };
 
-// Pick a question at random from the whole pool — no categories are shown.
-function pickRandomQuestion() {
-  if (!state.usedAll) state.usedAll = new Set();
-  let unused = [];
-  for (let i = 0; i < ALL_QUESTIONS.length; i++) {
-    if (!state.usedAll.has(i)) unused.push(i);
-  }
-  if (unused.length === 0) {
-    state.usedAll.clear();
-    for (let i = 0; i < ALL_QUESTIONS.length; i++) unused.push(i);
-  }
-  const idx = unused[Math.floor(Math.random() * unused.length)];
-  state.usedAll.add(idx);
-  state.currentQuestion = ALL_QUESTIONS[idx];
-}
+// Questions are asked aloud — nothing is selected or stored by the app.
+function pickRandomQuestion() { state.currentQuestion = null; }
 
 /* ======================== SHIELDING ========================
    New rule: before the Nucleus poses the question, each inner shell
@@ -1563,17 +1520,11 @@ function pickRandomQuestion() {
 function buildShieldSummary() {
   // Preserve a nucleus counter-roll summary if one is already shown.
   if (!$('shield-roll-summary').innerHTML.trim() || !$('shield-roll-summary').innerHTML.includes('Counter-Roll')) {
-    $('shield-roll-summary').className = 'roll-result' + (state.currentTimeLimit === 15 ? ' adv' : (state.currentTimeLimit === 7 ? ' crit' : ''));
-    let effectText = 'Normal: 10 seconds';
-    let descText = '';
-    if (state.currentRoll === 3) { effectText = 'Disadvantage'; descText = '7 seconds. No retry.'; }
-    else if (state.currentRoll === 2) { effectText = 'Disadvantage'; descText = '7 seconds. Nucleus chose the category.'; }
-    else if (state.currentTimeLimit === 15) { effectText = 'Advantage ⚡'; descText = '15 seconds. 1 retry.'; }
-    else descText = 'Standard difficulty.';
+    $('shield-roll-summary').className = 'roll-result';
     $('shield-roll-summary').innerHTML = `
-      <div class="label">Roll: ${state.currentRoll}</div>
-      <div class="effect">${effectText}</div>
-      <div class="desc">${descText}</div>
+      <div class="label">This Turn</div>
+      <div class="effect">One Question</div>
+      <div class="desc">Answer correctly to ionize and escape.</div>
     `;
   }
 }
@@ -1582,7 +1533,10 @@ function buildShieldSummary() {
 function offerShielding() {
   buildShieldSummary();
   state.deferredShielders = [];
-  const eligible = state.players.filter(p => p.role === 'inner' && !state.shieldUsed[p.id]);
+  // Only the inner shell physically standing in front of the active valence
+  // may screen — and only if their shield is unused this round.
+  const guardian = guardianForActiveValence();
+  const eligible = (guardian && !state.shieldUsed[guardian.id]) ? [guardian] : [];
   if (eligible.length === 0) {
     startQuestion();
     return;
@@ -1603,6 +1557,9 @@ function askNextScreening() {
   _screenPid = state.screenQueue.shift();
   const p = state.players.find(x => x.id === _screenPid);
   $('screen-modal-name').textContent = p.name;
+  const recipient = state.players.find(x => x.id === state.currentValenceId);
+  const recipEl = $('screen-modal-recipient-name');
+  if (recipEl && recipient) recipEl.textContent = recipient.name;
   $('screen-modal').classList.add('active');
 }
 
@@ -1612,9 +1569,9 @@ function screenDecision(choice) {
   closeScreenModal();
   const pid = _screenPid;
   if (choice === 'now') {
-    // Screening now is certain — it holds.
+    // Screening now is certain — it holds and will forgive a wrong answer this turn.
     state.shieldUsed[pid] = true;
-    state.currentRetries += 1;
+    state.screenedHold = true;
     renderElectronPanel();
     floatPopup(pid, 'Screening Worked!', 'good');
     flash('gold');
@@ -1659,7 +1616,7 @@ window.rollShield = function(n) {
   state.deferredShielders = (state.deferredShielders || []).filter(x => x !== pid);
   renderElectronPanel();
   if (n >= 4) {
-    state.currentRetries += 1;
+    state.screenedHold = true;
     flash('gold');
     floatPopup(pid, 'Screening Worked!', 'good');
   } else {
@@ -1678,35 +1635,27 @@ function resumeQuestionAfterShield() {
 /* ======================== QUESTION PHASE ======================== */
 function startQuestion() {
   showPhase('question');
-  if (!state.currentQuestion) pickRandomQuestion();
-  const q = state.currentQuestion;
-  $('q-text').textContent = q.q;
-  $('q-answer').textContent = q.a;
-  $('q-answer').classList.remove('shown');
-
-  // Gauntlet tracker
-  renderGauntletTracker();
 
   // Deferred inner shells may still invoke screening (by rolling the dice).
   renderDeferredShieldArea();
 
+  // The timer is NOT started automatically — the operator starts it manually
+  // (via the Start Timer button) when the player begins answering.
+  if (state.answerInterval) { clearInterval(state.answerInterval); state.answerInterval = null; }
   state.answerPaused = false;
+  state.answerTimer = state.currentTimeLimit;
+  updateAnswerTimerDisplay();
+  const startBtn = $('start-timer-btn');
+  if (startBtn) { startBtn.disabled = false; startBtn.textContent = '▶ Start ' + state.currentTimeLimit + 's Timer'; }
   $('pause-btn').textContent = 'Pause Timer';
-  startAnswerTimer(state.currentTimeLimit);
 }
 
-function renderGauntletTracker() {
-  const tracker = $('gauntlet-tracker');
-  tracker.innerHTML = '';
-  for (let i = 0; i < state.questionCount; i++) {
-    const pip = document.createElement('div');
-    pip.className = 'gauntlet-pip';
-    pip.textContent = i + 1;
-    if (i < state.questionsAnswered) pip.classList.add('done');
-    else if (i === state.questionsAnswered) pip.classList.add('current');
-    tracker.appendChild(pip);
-  }
-}
+// Operator presses this the moment the player starts answering.
+window.startAnswerCountdown = function() {
+  const startBtn = $('start-timer-btn');
+  if (startBtn) { startBtn.disabled = true; startBtn.textContent = 'Timer Running…'; }
+  startAnswerTimer(state.currentTimeLimit);
+};
 
 function startAnswerTimer(seconds) {
   state.answerTimer = seconds;
@@ -1733,7 +1682,6 @@ function updateAnswerTimerDisplay() {
   else if (state.answerTimer <= 5) at.classList.add('warn');
 }
 
-window.revealAnswer = function() { $('q-answer').classList.add('shown'); };
 window.pauseAnswerTimer = function() {
   state.answerPaused = !state.answerPaused;
   $('pause-btn').textContent = state.answerPaused ? 'Resume Timer' : 'Pause Timer';
@@ -1742,45 +1690,25 @@ window.pauseAnswerTimer = function() {
 window.markAnswer = function(correct) {
   if (state.answerInterval) { clearInterval(state.answerInterval); state.answerInterval = null; }
   if (correct) {
-    state.questionsCorrect++;
-    state.questionsAnswered++;
+    // One correct answer ionizes the electron — it escapes. Then the next one is up.
     flash('green');
     floatPopup(state.currentValenceId, 'Correct!', 'good');
-    if (state.questionsAnswered >= state.questionCount) {
-      // Ionized!
-      handleIonization();
-      return;
-    }
-    // next question in gauntlet
-    setTimeout(() => { pickRandomQuestion(); startQuestion(); }, 700);
+    handleIonization();
   } else {
-    floatPopup(state.currentValenceId, 'Wrong!', 'bad');
-    // Incorrect — check retries
-    if (state.currentRetries > 0) {
-      state.currentRetries--;
-      flash('red');
-      showModal('Retry Granted',
-        `Incorrect — but a retry is available. The same player attempts a new question.`);
-      setTimeout(() => { closeModal(); pickRandomQuestion(); startQuestion(); }, 1500);
+    const status = state.electronStatus[state.currentValenceId];
+    if (state.screenedHold) {
+      // The inner shell's screening absorbs the failure — no pull this turn.
+      state.screenedHold = false;
+      flash('gold');
+      floatPopup(state.currentValenceId, 'Screening held — no pull!', 'good');
     } else {
       flash('red');
-      // Failed — pull 1 step closer
-      const status = state.electronStatus[state.currentValenceId];
-      status.steps = Math.min(3, status.steps + 1);
-      if (state.inDeathSave) {
-        // Death save fail = absorbed
-        absorbCurrent();
-        return;
-      }
-      $('turn-end-summary').className = 'roll-result crit';
-      $('turn-end-summary').innerHTML = `
-        <div class="label">Failed</div>
-        <div class="effect">Pulled 1 Step Closer</div>
-        <div class="desc"><strong>${currentPlayerName()}</strong> is now ${status.steps} step${status.steps !== 1 ? 's' : ''} from the Nucleus.</div>
-      `;
-      renderElectronPanel();
-      showPhase('turn-end');
+      floatPopup(state.currentValenceId, 'Wrong!', 'bad');
+      status.steps = 1;  // dropped inside the inner shell
     }
+    renderElectronPanel();
+    // One question only — pass to the next valence electron.
+    setTimeout(() => advanceTurn(), 900);
   }
 };
 
@@ -1788,21 +1716,14 @@ function handleIonization() {
   state.escaped++;
   state.electronStatus[state.currentValenceId].escaped = true;
   flash('gold');
-  const name = currentPlayerName();
-  const ordinal = ['1st', '2nd', '3rd'][state.escaped - 1] || (state.escaped + 'th');
-  $('turn-end-summary').className = 'roll-result adv';
-  $('turn-end-summary').innerHTML = `
-    <div class="label">— IONIZATION SUCCESS —</div>
-    <div class="effect">⚡ ${name} HAS ESCAPED ⚡</div>
-    <div class="desc">${ordinal} electron to ionize.</div>
-  `;
+  floatPopup(state.currentValenceId, '⚡ IONIZED!', 'good');
   renderElectronPanel();
   renderHud();
   if (state.escaped >= 3) {
     setTimeout(() => endGame('electrons', 'all-escaped'), 1200);
     return;
   }
-  showPhase('turn-end');
+  setTimeout(() => advanceTurn(), 1200);
 }
 
 function absorbCurrent() {
@@ -1839,18 +1760,18 @@ window.rollDeathSave = function(n) {
 
 window.advanceTurn = function() {
   state.currentTurnIdx = (state.currentTurnIdx + 1) % state.turnOrder.length;
-  // Check if we wrapped around — new round
-  // For simplicity: after every full cycle through living valence electrons, start new round
-  // We track this by counting turns since last positioning
+  // Rotate valence slots clockwise after every turn.
+  state.rotationOffset = ((state.rotationOffset || 0) + 1) % 3;
+  // Each full 3-turn cycle = one new "round". Reset shields then.
   state._turnsThisRound = (state._turnsThisRound || 0) + 1;
-  const livingValence = state.players.filter(p => p.role === 'valence' && !state.electronStatus[p.id].escaped && !state.electronStatus[p.id].absorbed).length;
+  const livingValence = state.players.filter(p => p.role === 'valence' && !state.electronStatus[p.id].escaped).length;
   if (state._turnsThisRound >= livingValence) {
     state.round++;
     state._turnsThisRound = 0;
-    goToPositioning();
-  } else {
-    startTurn();
+    Object.keys(state.shieldUsed).forEach(k => state.shieldUsed[k] = false);
   }
+  renderHud();
+  startTurn();
 };
 
 function currentPlayerName() {
@@ -1869,21 +1790,25 @@ function renderAtomViz() {
   if (!svg) return;
   const CENTER_X = 230, CENTER_Y = 230;
   // Radii by step count (3 = arm's length / danger; 0 = full outer valence ring)
-  const VALENCE_RADII = { 0: 215, 1: 185, 2: 150, 3: 80 };
+  // 2-question gauntlet: electrons sit on the outer valence ring (210), advance to
+  // the outermost ring (245) after 1 correct answer, then escape past it after 2.
+  // Binary position: outer valence ring (0) or pulled inside the inner shell (1).
+  const VALENCE_RADII = { 0: 210, 1: 75 };
+  const PROGRESS_RING = 245;
   const INNER_RADIUS = 110;
-  const ESCAPED_RADIUS = 280;
+  const ESCAPED_RADIUS = 310;
 
   // Nucleus label
   const nuc = state.players.find(p => p.role === 'nucleus');
   $('viz-nucleus-label').textContent = nuc ? nuc.name.slice(0, 8) : 'NUC';
 
-  // Inner shell electrons — positioned at top & bottom
+  // Inner shells sit on the inner ring at their fixed slot angles.
   const inners = state.players.filter(p => p.role === 'inner');
-  const innerAngles = [-Math.PI / 2, Math.PI / 2]; // top, bottom
+  const innerAngles = INNER_SLOT_IDXS.map(s => SLOT_ANGLES[s]);
 
-  // Valence electrons — at left, lower-right, upper-right (or evenly spaced)
+  // Valences sit at 120° slots; their slot index rotates by state.rotationOffset each round.
   const valences = state.players.filter(p => p.role === 'valence');
-  const valenceAngles = [Math.PI, Math.PI / 3, -Math.PI / 3]; // ~180°, ~60°, ~-60°
+  const valenceAngles = valences.map((_, i) => SLOT_ANGLES[valenceSlotIdx(i)]);
 
   const electronsG = $('viz-electrons');
   const labelsG = $('viz-labels');
@@ -1917,7 +1842,12 @@ function renderAtomViz() {
   valences.forEach((p, i) => {
     const status = state.electronStatus[p.id];
     const angle = valenceAngles[i] || (i * 2 * Math.PI / 3);
-    let r = VALENCE_RADII[status.steps] ?? VALENCE_RADII[3];
+    let r = VALENCE_RADII[Math.min(status.steps, 1)] ?? VALENCE_RADII[1];
+    // Mid-gauntlet progress: after 1 correct of the 2-question gauntlet,
+    // the active electron sits on the outer progress ring.
+    if (state.currentValenceId === p.id && state.questionsCorrect === 1 && !status.escaped && !status.absorbed) {
+      r = PROGRESS_RING;
+    }
     let cx, cy, opacity = 1, klass = 'electron-dot valence';
     if (status.escaped) {
       cx = CENTER_X + Math.cos(angle) * ESCAPED_RADIUS;
@@ -2015,15 +1945,10 @@ function renderElectronPanel() {
     const row = document.createElement('div');
     row.className = 'electron-row';
     if (status.escaped) row.classList.add('escaped');
-    if (status.absorbed) row.classList.add('absorbed');
-    let pips = '';
-    for (let i = 0; i < 3; i++) {
-      pips += `<span class="steps-pip ${i < status.steps ? 'filled' : ''}"></span>`;
-    }
     let metaText = '';
     if (status.escaped) metaText = '<span style="color:var(--green);">⚡ Ionized</span>';
-    else if (status.absorbed) metaText = '<span style="color:var(--red-bright);">✘ Absorbed</span>';
-    else metaText = `Pulled: ${pips}`;
+    else if (status.steps >= 1) metaText = '<span style="color:var(--red-bright);">Inside Inner Shell</span>';
+    else metaText = '<span style="color:var(--gold);">Outer Shell</span>';
     row.innerHTML = `
       <div class="name">${p.name} <span class="role-tag">Valence</span></div>
       <div class="meta">${metaText}</div>
