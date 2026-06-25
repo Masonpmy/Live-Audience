@@ -930,12 +930,12 @@
         </div>
       </div>
 
-      <!-- PHASE: NUCLEUS COUNTER -->
+      <!-- PHASE: NUCLEUS COUNTER-ROLL (challenges a screening that was given) -->
       <div id="phase-counter" style="display:none;">
-        <div class="roll-result adv">
-          <div class="label">Roll Result</div>
-          <div class="effect">⚡ ADVANTAGE — Nat 6 ⚡</div>
-          <div class="desc">The Nucleus may counter-roll to challenge the surge.</div>
+        <div class="roll-result crit">
+          <div class="label">Screening Given</div>
+          <div class="effect" id="counter-shielder">The Nucleus strikes back</div>
+          <div class="desc">The Nucleus rolls to challenge it — <strong>1–3</strong> the shield holds (retry granted), <strong>4–6</strong> it is cancelled.</div>
         </div>
         <p class="small-note">Nucleus, roll your D6 and tap the result.</p>
         <div class="dice-pick">
@@ -972,6 +972,11 @@
 
       <!-- PHASE: QUESTION (asked verbally — the operator only marks the outcome) -->
       <div id="phase-question" style="display:none;">
+        <div id="retry-banner" class="roll-result adv" style="display:none; margin-bottom:10px;">
+          <div class="label">Screening Retry</div>
+          <div class="effect">Second Question</div>
+          <div class="desc">Get it right to be saved; get it wrong and they drop a shell.</div>
+        </div>
         <p class="small-note">Ask the question aloud. Start the timer when they begin to answer, then mark the outcome.</p>
         <div class="answer-timer" id="answer-timer">
           <div class="value" id="answer-timer-value">10</div>
@@ -1092,7 +1097,7 @@
       <span class="recipient-prefix">Will shield</span>
       <span class="recipient-name" id="screen-modal-recipient-name"></span>
     </div>
-    <p class="screen-modal-text">Give the screening effect now? Wait, and screening later means rolling the dice — with no guarantee it holds.</p>
+    <p class="screen-modal-text">Give the screening effect now? Either way the Nucleus rolls to counter it — deciding later also means rolling the dice yourself first.</p>
     <div class="action-row" style="margin-top:18px;">
       <button class="success" id="screen-now-btn">Screen Now</button>
       <button id="screen-later-btn">Decide Later</button>
@@ -1144,7 +1149,9 @@ function initState() {
     pendingShieldRetry: false,
     screenQueue: [],       // inner shell ids still to be asked this turn
     deferredShielders: [], // inner shell ids who chose to decide later
-    screenedHold: false,   // active valence is screened — a wrong answer is forgiven
+    retryAvailable: false, // a held screening grants the active valence one retry
+    inRetry: false,        // currently answering the retry (second) question
+    _afterCounter: null,   // continuation after the Nucleus counter-roll
     // electron status: id -> { steps: 0, escaped: false, absorbed: false }
     electronStatus: {}
   };
@@ -1411,7 +1418,8 @@ function startTurn() {
   state.inDeathSave = false;
   state.activeShielder = null;
   state.pendingShieldRetry = false;
-  state.screenedHold = false;  // set if an inner shell screens this valence (forgives a wrong answer)
+  state.retryAvailable = false;  // set if a screening holds (grants one retry this turn)
+  state.inRetry = false;
 
   const player = state.players.find(p => p.id === pid);
   $('current-player-name').textContent = player.name;
@@ -1491,32 +1499,29 @@ window.rollValence = function(n) {
   }
 };
 
+// The Nucleus rolls to challenge a screening that was just GIVEN.
+// 1-3: the shield holds — the valence gets a retry. 4-6: the shield is cancelled.
+function nucleusCounterShield(afterFn) {
+  state._afterCounter = afterFn;
+  const shielder = state.players.find(p => p.id === state.activeShielder);
+  $('counter-shielder').textContent = shielder
+    ? `${shielder.name} shields ${currentPlayerName()}`
+    : `Screening on ${currentPlayerName()}`;
+  showPhase('counter');
+}
+
 window.rollNucleus = function(n) {
-  if (n >= 4) {
-    // cancel advantage
-    state.currentTimeLimit = 10;
-    state.currentRetries = 0;
-    pickRandomQuestion();
-    $('shield-roll-summary').className = 'roll-result';
-    $('shield-roll-summary').innerHTML = `
-      <div class="label">Counter-Roll: ${n}</div>
-      <div class="effect">Advantage Cancelled</div>
-      <div class="desc">Nuclear charge overpowers the surge. Normal: 10 seconds, no retry.</div>
-    `;
-    offerShielding();
+  const after = state._afterCounter; state._afterCounter = null;
+  if (n <= 3) {
+    state.retryAvailable = true;   // shield holds -> one retry this turn
+    flash('gold');
+    floatPopup(state.currentValenceId, 'Shield holds! (retry)', 'good');
   } else {
-    // advantage stands
-    state.currentTimeLimit = 15;
-    state.currentRetries = 1;
-    pickRandomQuestion();
-    $('shield-roll-summary').className = 'roll-result adv';
-    $('shield-roll-summary').innerHTML = `
-      <div class="label">Counter-Roll: ${n}</div>
-      <div class="effect">Advantage Stands ⚡</div>
-      <div class="desc">Shielding overpowers nuclear charge. 15 seconds, 1 retry granted.</div>
-    `;
-    offerShielding();
+    state.retryAvailable = false;  // shield cancelled
+    flash('red');
+    floatPopup(state.currentValenceId, 'Shield cancelled!', 'bad');
   }
+  setTimeout(() => { if (after) after(); }, 1200);
 };
 
 // Questions are asked aloud — nothing is selected or stored by the app.
@@ -1581,13 +1586,14 @@ function screenDecision(choice) {
   closeScreenModal();
   const pid = _screenPid;
   if (choice === 'now') {
-    // Screening now is certain — it holds and will forgive a wrong answer this turn.
+    // Screening is GIVEN immediately — consume the one-per-game shield, then the
+    // Nucleus counter-rolls to see whether it actually holds.
     state.shieldUsed[pid] = true;
-    state.screenedHold = true;
+    state.activeShielder = pid;
     renderElectronPanel();
-    floatPopup(pid, 'Screening Worked!', 'good');
+    floatPopup(pid, 'Screening Given!', 'good');
     flash('gold');
-    setTimeout(askNextScreening, 1000);
+    setTimeout(() => nucleusCounterShield(askNextScreening), 1000);
   } else {
     // Defer — keep the option, but using it later requires a dice roll.
     state.deferredShielders.push(pid);
@@ -1627,18 +1633,20 @@ window.rollShield = function(n) {
   // This attempt is over for this turn either way.
   state.deferredShielders = (state.deferredShielders || []).filter(x => x !== pid);
   if (n >= 4) {
-    // Screening is GIVEN — consume the one-per-game shield and hold the electron.
+    // Screening is GIVEN — consume the one-per-game shield. The Nucleus then
+    // counter-rolls (back inside the question afterwards).
     state.shieldUsed[pid] = true;
-    state.screenedHold = true;
     flash('gold');
-    floatPopup(pid, 'Screening Worked!', 'good');
+    floatPopup(pid, 'Screening Given!', 'good');
+    renderElectronPanel();
+    setTimeout(() => nucleusCounterShield(resumeQuestionAfterShield), 1200);
   } else {
     // Only ATTEMPTED — the shield is NOT consumed and may be used again later.
     flash('red');
     floatPopup(pid, 'Screening Failed!', 'bad');
+    renderElectronPanel();
+    setTimeout(resumeQuestionAfterShield, 1200);
   }
-  renderElectronPanel();
-  setTimeout(resumeQuestionAfterShield, 1200);
 };
 
 function resumeQuestionAfterShield() {
@@ -1650,6 +1658,10 @@ function resumeQuestionAfterShield() {
 /* ======================== QUESTION PHASE ======================== */
 function startQuestion() {
   showPhase('question');
+
+  // Retry banner: this is the second (retry) question granted by a held screening.
+  const banner = $('retry-banner');
+  if (banner) banner.style.display = state.inRetry ? 'block' : 'none';
 
   // Deferred inner shells may still invoke screening (by rolling the dice).
   renderDeferredShieldArea();
@@ -1705,6 +1717,26 @@ window.pauseAnswerTimer = function() {
 window.markAnswer = function(correct) {
   if (state.answerInterval) { clearInterval(state.answerInterval); state.answerInterval = null; }
   const status = state.electronStatus[state.currentValenceId];
+
+  // --- Second (retry) question, granted by a screening that held ---
+  if (state.inRetry) {
+    state.inRetry = false;
+    if (correct) {
+      // The retry is passed — the electron is saved from the drop (but doesn't advance).
+      flash('green');
+      floatPopup(state.currentValenceId, 'Saved!', 'good');
+    } else {
+      // The retry is failed — drop one shell (never below the intermediate shell).
+      flash('red');
+      floatPopup(state.currentValenceId, 'Wrong! ▼', 'bad');
+      status.level = Math.max(FLOOR_LEVEL, status.level - 1);
+    }
+    renderElectronPanel();
+    setTimeout(() => advanceTurn(), 900);
+    return;
+  }
+
+  // --- First question of the turn ---
   if (correct) {
     // Move OUT one shell. Two net correct answers (level +2) exit the atom.
     flash('green');
@@ -1716,20 +1748,21 @@ window.markAnswer = function(correct) {
     }
     renderElectronPanel();
     setTimeout(() => advanceTurn(), 900);
+  } else if (state.retryAvailable) {
+    // A screening held — they get ONE retry, but must answer a SECOND question.
+    state.retryAvailable = false;
+    state.inRetry = true;
+    flash('gold');
+    floatPopup(state.currentValenceId, 'Retry!', 'good');
+    showModal('Screening Retry',
+      `<strong>${currentPlayerName()}</strong> answered wrong — but the screening holds. They get one retry and <strong>must answer a second question</strong>. Get it right to be saved; get it wrong and they drop a shell.`);
+    setTimeout(() => { closeModal(); startQuestion(); }, 1700);
   } else {
-    if (state.screenedHold) {
-      // Screening was given to this electron — it holds, so no drop this turn.
-      state.screenedHold = false;
-      flash('gold');
-      floatPopup(state.currentValenceId, 'Screening held — no drop!', 'good');
-    } else {
-      // Drop IN one shell, but never below the intermediate shell (never the inner shell).
-      flash('red');
-      floatPopup(state.currentValenceId, 'Wrong! ▼', 'bad');
-      status.level = Math.max(FLOOR_LEVEL, status.level - 1);
-    }
+    // No shield — drop IN one shell, but never below the intermediate shell.
+    flash('red');
+    floatPopup(state.currentValenceId, 'Wrong! ▼', 'bad');
+    status.level = Math.max(FLOOR_LEVEL, status.level - 1);
     renderElectronPanel();
-    // One question per turn — pass to the next valence electron.
     setTimeout(() => advanceTurn(), 900);
   }
 };
